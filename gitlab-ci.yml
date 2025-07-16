@@ -1,0 +1,145 @@
+# GitLab CI/CD Pipeline for NixOS Kubernetes Infrastructure
+# Deploys Terraform to local GitLab runner with proper state management
+
+variables:
+  TERRAFORM_VERSION: "1.6.0"
+  TF_ROOT: "${CI_PROJECT_DIR}/terraform"
+  TF_STATE_NAME: "${CI_PROJECT_NAME}"
+  TF_CACHE_KEY: "${CI_PROJECT_ID}-terraform"
+  # Set to 'true' to enable Terraform debug output
+  TF_LOG: "INFO"
+
+# Global settings
+default:
+  image: hashicorp/terraform:${TERRAFORM_VERSION}
+  tags:
+    - homelab  # Your local runner tag
+  before_script:
+    - cd ${TF_ROOT}
+    - terraform --version
+    - terraform init -backend-config="key=${TF_STATE_NAME}/terraform.tfstate"
+
+# Cache Terraform plugins and modules
+cache:
+  key: ${TF_CACHE_KEY}
+  paths:
+    - ${TF_ROOT}/.terraform
+    - ${TF_ROOT}/.terraform.lock.hcl
+
+stages:
+  - validate
+  - plan
+  - deploy
+  - destroy
+
+# Validate Terraform configuration
+tf:validate:
+  stage: validate
+  script:
+    - terraform fmt -check -recursive
+    - terraform validate
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Plan Terraform changes
+tf:plan:
+  stage: plan
+  script:
+    - terraform plan -input=false -out=tfplan
+  artifacts:
+    name: plan
+    paths:
+      - ${TF_ROOT}/tfplan
+    expire_in: 1 week
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Apply Terraform changes (manual for safety)
+tf:apply:
+  stage: deploy
+  script:
+    - terraform apply -input=false tfplan
+  dependencies:
+    - tf:plan
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  environment:
+    name: production
+    action: start
+
+# Destroy infrastructure (manual and protected)
+tf:destroy:
+  stage: destroy
+  script:
+    - terraform destroy -auto-approve
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  environment:
+    name: production
+    action: stop
+  allow_failure: false
+
+# Phase 2: NixOS ISO Generation (runs on commits to main)
+nixos:generate-isos:
+  stage: deploy
+  image: nixos/nix:latest
+  tags:
+    - homelab
+  before_script:
+    - nix-env -iA nixpkgs.nixos-generators
+    - chmod +x scripts/*.sh
+  script:
+    - ./scripts/populate-nixos-configs.sh --force
+    - ./scripts/generate-nixos-isos.sh
+  artifacts:
+    name: nixos-isos
+    paths:
+      - build/isos/
+      - build/logs/
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  allow_failure: true
+
+# Phase 2: Proxmox Template Creation (requires Proxmox access)
+proxmox:create-templates:
+  stage: deploy
+  image: nixos/nix:latest
+  tags:
+    - homelab
+  before_script:
+    - chmod +x scripts/*.sh
+  script:
+    - ./scripts/create-proxmox-templates.sh
+  dependencies:
+    - nixos:generate-isos
+  artifacts:
+    name: proxmox-templates
+    paths:
+      - build/templates/
+      - build/logs/
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  allow_failure: true
+
+# Validation job to check Phase 2 implementation
+validate:phase2:
+  stage: validate
+  image: nixos/nix:latest
+  tags:
+    - homelab
+  before_script:
+    - chmod +x scripts/*.sh
+  script:
+    - ./scripts/validate-phase2.sh
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true
