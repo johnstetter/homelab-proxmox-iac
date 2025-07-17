@@ -6,7 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Terraform Operations
 ```bash
-# Initialize Terraform
+# Set up S3 backend (first time only)
+cd scripts/
+./create-s3-state-bucket.sh
+
+# Initialize Terraform with S3 backend
 cd terraform/
 terraform init
 
@@ -43,12 +47,16 @@ terraform fmt -recursive
 
 ### Project Setup
 ```bash
-# Configure Terraform variables
+# Configure Terraform variables (including S3 backend)
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# Edit terraform.tfvars with your Proxmox details
+# Edit terraform.tfvars with your Proxmox and S3 backend details
 
 # Make scripts executable
 chmod +x scripts/*.sh
+
+# Set up AWS credentials for S3 backend
+aws configure
+# OR export AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
 ```
 
 ## Architecture Overview
@@ -82,9 +90,9 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 ### Multi-Phase Architecture
 
 **Phase 1** - Terraform + Proxmox Automation:
-- Terraform infrastructure provisioning
-- Proxmox VM management
-- AWS S3/DynamoDB backend for state management
+- Terraform infrastructure provisioning with S3 remote state backend
+- Proxmox VM management via Telmate provider
+- AWS S3/DynamoDB backend for state management and locking
 
 **Phase 2** - NixOS Node Configuration:
 - NixOS ISO generation with nixos-generators

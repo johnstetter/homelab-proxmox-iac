@@ -1,3 +1,34 @@
+# Terraform Backend Configuration
+variable "backend_bucket_name" {
+  description = "S3 bucket name for Terraform state"
+  type        = string
+  default     = "k8s-infra-terraform-state"
+}
+
+variable "backend_key" {
+  description = "S3 key path for Terraform state file"
+  type        = string
+  default     = "k8s-infra/terraform.tfstate"
+}
+
+variable "backend_region" {
+  description = "AWS region for S3 bucket and DynamoDB table"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "backend_dynamodb_table" {
+  description = "DynamoDB table name for state locking"
+  type        = string
+  default     = "k8s-infra-terraform-locks"
+}
+
+variable "backend_encrypt" {
+  description = "Enable encryption for Terraform state in S3"
+  type        = bool
+  default     = true
+}
+
 # Proxmox Provider Variables
 variable "proxmox_api_url" {
   description = "Proxmox API URL"

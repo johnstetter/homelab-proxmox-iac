@@ -67,21 +67,32 @@ This Terraform module represents **Phase 1** of the deployment roadmap:
 
 ## Quick Start
 
-1. **Clone and configure**:
+1. **Set up S3 backend** (required for remote state):
+   ```bash
+   # Follow the S3 setup guide first
+   # See ../docs/S3-DYNAMODB-SETUP.md for complete instructions
+   
+   # Quick setup with provided script:
+   cd scripts/
+   ./create-s3-state-bucket.sh
+   ```
+
+2. **Configure Terraform**:
    ```bash
    cd terraform/
    cp terraform.tfvars.example terraform.tfvars
-   # Edit terraform.tfvars with your Proxmox details
+   # Edit terraform.tfvars with your Proxmox AND S3 backend details
    ```
 
-2. **Initialize and plan**:
+3. **Initialize with backend**:
    ```bash
    terraform init
-   terraform plan
+   # This will configure the S3 backend for remote state
    ```
 
-3. **Deploy infrastructure**:
+4. **Plan and deploy**:
    ```bash
+   terraform plan
    terraform apply
    ```
 
@@ -93,6 +104,49 @@ This Terraform module represents **Phase 1** of the deployment roadmap:
    # Use generated Ansible inventory
    ansible-playbook -i inventory/hosts.yml your-k8s-playbook.yml
    ```
+
+## Backend Configuration
+
+This project uses AWS S3 for remote state storage with DynamoDB for state locking. The backend configuration is managed through variables in `terraform.tfvars`.
+
+### Local Development Setup
+
+1. **Create S3 backend resources**:
+   ```bash
+   # Use the provided script to create S3 bucket and DynamoDB table
+   cd scripts/
+   ./create-s3-state-bucket.sh
+   ```
+
+2. **Configure AWS credentials**:
+   ```bash
+   # Option 1: AWS CLI
+   aws configure
+   
+   # Option 2: Environment variables
+   export AWS_ACCESS_KEY_ID="your-access-key"
+   export AWS_SECRET_ACCESS_KEY="your-secret-key"
+   export AWS_DEFAULT_REGION="us-east-1"
+   ```
+
+3. **Update backend configuration**:
+   ```bash
+   # Edit terraform.tfvars with your actual S3 bucket and DynamoDB table names
+   backend_bucket_name     = "your-unique-bucket-name"
+   backend_key            = "k8s-infra/terraform.tfstate"
+   backend_region         = "us-east-1"
+   backend_dynamodb_table = "k8s-infra-terraform-locks"
+   backend_encrypt        = true
+   ```
+
+### Backend Migration
+
+If migrating from local state to S3:
+```bash
+terraform init
+# Terraform will prompt to copy existing state to S3
+# Answer 'yes' to complete the migration
+```
 
 ## Configuration
 

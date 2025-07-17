@@ -1,3 +1,10 @@
+# Terraform Backend Configuration
+backend_bucket_name     = "k8s-infra-terraform-state"
+backend_key            = "k8s-infra/terraform.tfstate"
+backend_region         = "us-east-1"
+backend_dynamodb_table = "k8s-infra-terraform-locks"
+backend_encrypt        = true
+
 # Proxmox Provider Configuration
 proxmox_api_url          = "https://your-proxmox-server:8006/api2/json"
 proxmox_api_token_id     = "terraform@pve!terraform"
