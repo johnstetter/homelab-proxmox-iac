@@ -83,11 +83,10 @@ This Terraform module represents **Phase 1** of the deployment roadmap:
    
    # Use environment-specific configuration files
    # Copy and customize for your environment:
-   cp environments/dev.tfvars environments/dev.tfvars.local
-   cp environments/prod.tfvars environments/prod.tfvars.local
+   cp environments/dev.tfvars.example environments/dev.tfvars
+   cp environments/prod.tfvars.example environments/prod.tfvars
    
-   # Edit the .local files with your Proxmox AND S3 backend details
-   # (Alternative: Use terraform.tfvars.example as before)
+   # Edit the .tfvars files with your Proxmox AND S3 backend details
    ```
 
 3. **Initialize with backend**:
@@ -99,12 +98,12 @@ This Terraform module represents **Phase 1** of the deployment roadmap:
 4. **Plan and deploy**:
    ```bash
    # For development environment
-   terraform plan -var-file="environments/dev.tfvars.local"
-   terraform apply -var-file="environments/dev.tfvars.local"
+   terraform plan -var-file="environments/dev.tfvars"
+   terraform apply -var-file="environments/dev.tfvars"
    
    # For production environment
-   terraform plan -var-file="environments/prod.tfvars.local"
-   terraform apply -var-file="environments/prod.tfvars.local"
+   terraform plan -var-file="environments/prod.tfvars"
+   terraform apply -var-file="environments/prod.tfvars"
    ```
 
 4. **Access your cluster**:
@@ -240,10 +239,9 @@ terraform/
 ├── versions.tf                # Version constraints
 ├── outputs.tf                 # Output values
 ├── backend.tf                 # S3 backend configuration
-├── terraform.tfvars.example   # Example configuration (legacy)
 ├── environments/              # Environment-specific configurations
-│   ├── dev.tfvars            # Development environment
-│   └── prod.tfvars           # Production environment
+│   ├── dev.tfvars.example    # Development environment template
+│   └── prod.tfvars.example   # Production environment template
 ├── modules/
 │   └── proxmox_vm/            # Reusable VM module
 └── templates/                 # Template files

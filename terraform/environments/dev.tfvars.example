@@ -1,6 +1,7 @@
+# Development Environment Configuration
 # Terraform Backend Configuration
 backend_bucket_name     = "k8s-infra-terraform-state"
-backend_key            = "k8s-infra/terraform.tfstate"
+backend_key            = "k8s-infra/dev/terraform.tfstate"
 backend_region         = "us-east-1"
 backend_dynamodb_table = "k8s-infra-terraform-locks"
 backend_encrypt        = true
@@ -15,7 +16,7 @@ proxmox_timeout          = 300
 proxmox_debug            = false
 
 # Cluster Configuration
-cluster_name = "k8s-cluster"
+cluster_name = "k8s-dev"
 environment  = "dev"
 
 # Proxmox Infrastructure
@@ -23,25 +24,25 @@ proxmox_node = "pve"
 vm_template  = "nixos-2311-cloud-init"  # NixOS template (to be created with nixos-generators)
 disk_storage = "local-lvm"
 
-# Control Plane Configuration
-control_plane_count      = 3
+# Control Plane Configuration - Minimal for dev
+control_plane_count      = 1
 control_plane_cores      = 2
-control_plane_memory     = 4096
-control_plane_disk_size  = "50G"
+control_plane_memory     = 2048  # 2GB for dev
+control_plane_disk_size  = "30G"  # Smaller disk for dev
 control_plane_ip_base    = "192.168.1.10"
 
-# Worker Node Configuration
-worker_node_count      = 3
-worker_node_cores      = 4
-worker_node_memory     = 8192
-worker_node_disk_size  = "100G"
+# Worker Node Configuration - Minimal for dev
+worker_node_count      = 2
+worker_node_cores      = 2
+worker_node_memory     = 4096  # 4GB for dev
+worker_node_disk_size  = "50G"  # Smaller disk for dev
 worker_node_ip_base    = "192.168.1.20"
 
-# Load Balancer Configuration (optional)
+# Load Balancer Configuration - Disabled for dev
 enable_load_balancer      = false
 load_balancer_cores       = 1
-load_balancer_memory      = 2048
-load_balancer_disk_size   = "20G"
+load_balancer_memory      = 1024
+load_balancer_disk_size   = "10G"
 load_balancer_ip          = "192.168.1.100"
 
 # Network Configuration
@@ -60,25 +61,7 @@ kubernetes_version  = "1.28.0"
 pod_subnet         = "10.244.0.0/16"
 service_subnet     = "10.96.0.0/12"
 
-# Example IP allocation:
-# Control Plane nodes: 192.168.1.101, 192.168.1.102, 192.168.1.103
-# Worker nodes: 192.168.1.201, 192.168.1.202, 192.168.1.203
-# Load Balancer: 192.168.1.100 (if enabled)
-#
-# DEPRECATED: Use environment-specific files instead
-#
-# For new deployments, use:
-# - environments/dev.tfvars for development environment
-# - environments/prod.tfvars for production environment
-#
-# Usage:
-# terraform plan -var-file="environments/dev.tfvars"
-# terraform apply -var-file="environments/dev.tfvars"
-#
-# To use this example file (legacy):
-# 1. Copy this file to terraform.tfvars
-# 2. Update the values according to your environment
-# 3. Ensure your Proxmox API token has sufficient permissions
-# 4. Create NixOS VM template using nixos-generators (Phase 2)
-# 5. Verify network configuration matches your Proxmox setup
-# 6. Configure NixOS files in ../nixos/ directory
+# Development Environment IP allocation:
+# Control Plane: 192.168.1.101 (single node)
+# Worker nodes: 192.168.1.201, 192.168.1.202
+# Load Balancer: Disabled for dev

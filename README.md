@@ -31,10 +31,9 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 │   ├── backend.tf             # Remote state backend config
 │   ├── variables.tf           # Variable definitions
 │   ├── outputs.tf
-│   ├── terraform.tfvars.example  # Legacy example file
 │   ├── environments/          # Environment-specific configurations
-│   │   ├── dev.tfvars        # Development environment
-│   │   └── prod.tfvars       # Production environment
+│   │   ├── dev.tfvars.example    # Development environment template
+│   │   └── prod.tfvars.example   # Production environment template
 │   ├── modules/
 │   │   └── proxmox_vm/        # Reusable VM provisioning module
 │   └── templates/             # Template files for generated configs
@@ -70,8 +69,8 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 1. **Set up AWS backend**: Follow [docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)
 2. **Configure Terraform variables**: 
    - Use environment-specific configuration files in `terraform/environments/`
-   - Copy and customize `terraform/environments/dev.tfvars` for development
-   - Copy and customize `terraform/environments/prod.tfvars` for production
+   - Copy `terraform/environments/dev.tfvars.example` to `terraform/environments/dev.tfvars` and customize for development
+   - Copy `terraform/environments/prod.tfvars.example` to `terraform/environments/prod.tfvars` and customize for production
    - The `backend.tf` file uses variables for S3 bucket name, region, and DynamoDB table - configure these in your environment files
 3. **Deploy infrastructure locally**: 
    ```bash
