@@ -7,9 +7,10 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 - Provision dev and prod Kubernetes clusters automatically via Terraform
 - Use NixOS for minimal, declarative OS configuration
 - Maintain a reusable infrastructure-as-code foundation
-- Automate cluster provisioning with GitLab CI/CD
+- Focus on local CLI usage for initial development and testing
 - Apply DRY principles and use reusable modules
 - Future phases will add NixOS cloud-init, Kubernetes installation, and GitOps
+- GitLab CI/CD automation as a stretch goal
 
 ## 📁 Directory Structure
 
@@ -59,11 +60,13 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 
 Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS for state management.
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Local CLI)
 
 1. **Set up AWS backend**: Follow [docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)
-2. **Configure Terraform**: Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and populate with your Proxmox details
-3. **Deploy infrastructure**: 
+2. **Configure Terraform variables**: 
+   - Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and populate with your Proxmox details
+   - The `backend.tf` file uses variables for S3 bucket name, region, and DynamoDB table - configure these in your `terraform.tfvars`
+3. **Deploy infrastructure locally**: 
    ```bash
    cd terraform/
    terraform init
@@ -93,7 +96,8 @@ For development commands and architecture overview, see [docs/CLAUDE.md](./docs/
 - ✅ Terraform infrastructure provisioning
 - ✅ Proxmox VM management
 - ✅ AWS S3/DynamoDB backend for state management
-- ✅ GitLab CI/CD pipeline
+- ✅ Local CLI workflow established
+- 🎯 GitLab CI/CD pipeline (stretch goal)
 
 **Phase 2** - NixOS Node Configuration ⏳
 - ⏳ NixOS ISO generation with nixos-generators
@@ -109,8 +113,9 @@ For development commands and architecture overview, see [docs/CLAUDE.md](./docs/
 
 - **Proxmox VE** server with API access
 - **AWS account** for Terraform state backend
-- **GitLab runner** (optional, for CI/CD)
+- **Terraform CLI** installed locally
 - **NixOS** development environment or Nix package manager
+- **GitLab runner** (optional, for future CI/CD automation)
 
 ## 📝 License
 
