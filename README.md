@@ -29,10 +29,15 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 │   ├── providers.tf
 │   ├── versions.tf
 │   ├── backend.tf             # Remote state backend config
-│   ├── terraform.tfvars.example
+│   ├── variables.tf           # Variable definitions
+│   ├── outputs.tf
+│   ├── terraform.tfvars.example  # Legacy example file
+│   ├── environments/          # Environment-specific configurations
+│   │   ├── dev.tfvars        # Development environment
+│   │   └── prod.tfvars       # Production environment
 │   ├── modules/
 │   │   └── proxmox_vm/        # Reusable VM provisioning module
-│   └── outputs.tf
+│   └── templates/             # Template files for generated configs
 ├── nixos/                     # NixOS configurations
 │   ├── common/
 │   │   └── configuration.nix  # Shared NixOS configuration
@@ -64,14 +69,22 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 
 1. **Set up AWS backend**: Follow [docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)
 2. **Configure Terraform variables**: 
-   - Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and populate with your Proxmox details
-   - The `backend.tf` file uses variables for S3 bucket name, region, and DynamoDB table - configure these in your `terraform.tfvars`
+   - Use environment-specific configuration files in `terraform/environments/`
+   - Copy and customize `terraform/environments/dev.tfvars` for development
+   - Copy and customize `terraform/environments/prod.tfvars` for production
+   - The `backend.tf` file uses variables for S3 bucket name, region, and DynamoDB table - configure these in your environment files
 3. **Deploy infrastructure locally**: 
    ```bash
    cd terraform/
+   
+   # For development environment
    terraform init
-   terraform plan
-   terraform apply
+   terraform plan -var-file="environments/dev.tfvars"
+   terraform apply -var-file="environments/dev.tfvars"
+   
+   # For production environment
+   terraform plan -var-file="environments/prod.tfvars"
+   terraform apply -var-file="environments/prod.tfvars"
    ```
 4. **Phase 2 - NixOS**: Follow [docs/README-phase2.md](./docs/README-phase2.md) for NixOS configuration
 5. **Testing**: Use the comprehensive [docs/TESTING-PLAN.md](./docs/TESTING-PLAN.md) to validate your setup

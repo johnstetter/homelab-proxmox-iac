@@ -80,8 +80,14 @@ This Terraform module represents **Phase 1** of the deployment roadmap:
 2. **Configure Terraform**:
    ```bash
    cd terraform/
-   cp terraform.tfvars.example terraform.tfvars
-   # Edit terraform.tfvars with your Proxmox AND S3 backend details
+   
+   # Use environment-specific configuration files
+   # Copy and customize for your environment:
+   cp environments/dev.tfvars environments/dev.tfvars.local
+   cp environments/prod.tfvars environments/prod.tfvars.local
+   
+   # Edit the .local files with your Proxmox AND S3 backend details
+   # (Alternative: Use terraform.tfvars.example as before)
    ```
 
 3. **Initialize with backend**:
@@ -92,8 +98,13 @@ This Terraform module represents **Phase 1** of the deployment roadmap:
 
 4. **Plan and deploy**:
    ```bash
-   terraform plan
-   terraform apply
+   # For development environment
+   terraform plan -var-file="environments/dev.tfvars.local"
+   terraform apply -var-file="environments/dev.tfvars.local"
+   
+   # For production environment
+   terraform plan -var-file="environments/prod.tfvars.local"
+   terraform apply -var-file="environments/prod.tfvars.local"
    ```
 
 4. **Access your cluster**:
@@ -228,7 +239,11 @@ terraform/
 ├── variables.tf               # Input variables
 ├── versions.tf                # Version constraints
 ├── outputs.tf                 # Output values
-├── terraform.tfvars.example   # Example configuration
+├── backend.tf                 # S3 backend configuration
+├── terraform.tfvars.example   # Example configuration (legacy)
+├── environments/              # Environment-specific configurations
+│   ├── dev.tfvars            # Development environment
+│   └── prod.tfvars           # Production environment
 ├── modules/
 │   └── proxmox_vm/            # Reusable VM module
 └── templates/                 # Template files

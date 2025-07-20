@@ -65,7 +65,17 @@ service_subnet     = "10.96.0.0/12"
 # Worker nodes: 192.168.1.201, 192.168.1.202, 192.168.1.203
 # Load Balancer: 192.168.1.100 (if enabled)
 #
-# To use this file:
+# DEPRECATED: Use environment-specific files instead
+#
+# For new deployments, use:
+# - environments/dev.tfvars for development environment
+# - environments/prod.tfvars for production environment
+#
+# Usage:
+# terraform plan -var-file="environments/dev.tfvars"
+# terraform apply -var-file="environments/dev.tfvars"
+#
+# To use this example file (legacy):
 # 1. Copy this file to terraform.tfvars
 # 2. Update the values according to your environment
 # 3. Ensure your Proxmox API token has sufficient permissions
