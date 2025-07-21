@@ -11,8 +11,7 @@ This guide provides step-by-step instructions for implementing **Phase 2** of th
 
 ## 📋 Prerequisites
 
-- **NixOS** development environment or Nix package manager installed
-- **nixos-generators** package available
+- **Nix package manager** installed
 - **Proxmox VE** access for template creation
 - **Phase 1** Terraform infrastructure completed
 
@@ -29,14 +28,16 @@ mkdir -p ~/.config/nix
 echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 ```
 
-### Install nixos-generators
+### Nix Environment Setup
 ```bash
-# Install nixos-generators
-nix-env -iA nixpkgs.nixos-generators
+# Source Nix environment (required for each terminal session)
+source ~/.nix-profile/etc/profile.d/nix.sh
 
-# Or with flakes
-nix profile install nixpkgs#nixos-generators
+# Optional: Add to shell profile for automatic loading
+echo 'source ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
 ```
+
+**Note**: The scripts use `nix run` to access nixos-generators dynamically, so no permanent installation is required.
 
 ## 🚀 Phase 2 Implementation Steps
 
@@ -61,7 +62,10 @@ The existing NixOS configuration files need to be populated with Kubernetes comp
 Create cloud-init compatible NixOS ISOs for each node type:
 
 ```bash
-# Generate all ISOs automatically
+# Source Nix environment first (required)
+source ~/.nix-profile/etc/profile.d/nix.sh
+
+# Generate all ISOs automatically (takes 10-30 minutes)
 ./scripts/generate-nixos-isos.sh
 
 # Or generate individually:
@@ -187,6 +191,9 @@ Validates Phase 2 implementation and tests connectivity.
 ### Manual Testing
 
 ```bash
+# Source Nix environment
+source ~/.nix-profile/etc/profile.d/nix.sh
+
 # Test ISO generation
 ./scripts/generate-nixos-isos.sh --type control --env dev
 
@@ -210,11 +217,12 @@ ssh -i ssh_keys/k8s_private_key.pem nixos@<control-plane-ip> "sudo systemctl sta
 
 **ISO Generation Fails:**
 ```bash
-# Check nixos-generators installation
-nixos-generators --help
+# Check Nix environment
+source ~/.nix-profile/etc/profile.d/nix.sh
+nix --version
 
-# Verify Nix configuration
-nix-env --version
+# Verify experimental features are enabled
+cat ~/.config/nix/nix.conf
 ```
 
 **Template Creation Fails:**

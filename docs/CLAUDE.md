@@ -35,11 +35,14 @@ terraform fmt -recursive
 # Populate NixOS configurations
 ./scripts/populate-nixos-configs.sh
 
-# Generate NixOS ISOs
+# Source Nix environment (required for ISO generation)
+source ~/.nix-profile/etc/profile.d/nix.sh
+
+# Generate NixOS ISOs (takes 10-30 minutes)
 ./scripts/generate-nixos-isos.sh
 
 # Create Proxmox templates
-./scripts/create-proxmox-templates.sh
+./scripts/create-proxmox-templates.sh --proxmox-host YOUR_PROXMOX_IP
 
 # Validate Phase 2 implementation
 ./scripts/validate-phase2.sh
@@ -155,7 +158,19 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 ## Dependencies
 
 - **Terraform** >= 1.0 with Telmate Proxmox provider
-- **Nix package manager** and **nixos-generators** for Phase 2
+- **Nix package manager** for Phase 2 (nixos-generators accessed via `nix run`)
 - **Proxmox VE** with API access and sufficient permissions
 - **AWS S3/DynamoDB** for Terraform state backend
 - **jq** for JSON processing in validation scripts
+
+### Nix Setup
+```bash
+# Install Nix (single-user installation)
+curl -L https://nixos.org/nix/install | sh
+
+# Source in current session
+source ~/.nix-profile/etc/profile.d/nix.sh
+
+# Optional: Add to shell profile for automatic loading
+echo 'source ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
+```
