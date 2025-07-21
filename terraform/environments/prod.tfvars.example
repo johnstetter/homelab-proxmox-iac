@@ -21,7 +21,7 @@ environment  = "prod"
 
 # Proxmox Infrastructure
 proxmox_node = "pve"
-vm_template  = "nixos-2311-cloud-init"  # NixOS template (to be created with nixos-generators)
+vm_template  = "nixos-2311-k8s-control-prod"  # NixOS template created by Phase 2 scripts
 disk_storage = "local-lvm"
 
 # Control Plane Configuration - HA for prod
