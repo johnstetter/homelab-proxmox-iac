@@ -1,5 +1,8 @@
-# GitLab CI/CD Pipeline for NixOS Kubernetes Infrastructure
-# Deploys Terraform to local GitLab runner with proper state management
+# GitLab CI/CD Pipeline for NixOS Kubernetes Infrastructure  
+# 
+# STATUS: Work in Progress - Requires GitLab runner setup
+# Primary workflow is local CLI usage (see README.md)
+# CI/CD is a stretch goal for automation
 
 variables:
   TERRAFORM_VERSION: "1.6.0"
@@ -36,11 +39,12 @@ stages:
 tf:validate:
   stage: validate
   script:
-    - terraform fmt -check -recursive
+    - terraform fmt -check -recursive  
     - terraform validate
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true  # Allow failure until runner is properly configured
 
 # Plan Terraform changes
 tf:plan:
@@ -55,6 +59,7 @@ tf:plan:
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true  # Allow failure until runner is properly configured
 
 # Apply Terraform changes (manual for safety)
 tf:apply:
