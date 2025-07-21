@@ -95,9 +95,11 @@ Upload ISOs to Proxmox and create VM templates:
 Update your `terraform.tfvars` to use the new NixOS templates:
 
 ```hcl
-vm_template = "nixos-2311-k8s-control"  # For control plane
-# or
-vm_template = "nixos-2311-k8s-worker"   # For worker nodes
+# For development environment:
+vm_template = "nixos-2311-k8s-control-dev"  # Dev control plane template
+
+# For production environment:
+vm_template = "nixos-2311-k8s-control-prod"  # Prod control plane template
 ```
 
 ### Step 5: Deploy and Test

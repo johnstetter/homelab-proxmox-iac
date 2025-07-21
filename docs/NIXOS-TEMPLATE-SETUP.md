@@ -160,9 +160,11 @@ cat build/templates/proxmox-template-ids.json
 Update your `terraform.tfvars`:
 
 ```hcl
-# Use the generated template names
-control_plane_template = "nixos-2311-k8s-control-dev"
-worker_template = "nixos-2311-k8s-worker-dev"
+# Use the generated template names for development:
+vm_template = "nixos-2311-k8s-control-dev"
+
+# Or for production:
+vm_template = "nixos-2311-k8s-control-prod"
 ```
 
 Test deployment:
