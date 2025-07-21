@@ -216,8 +216,21 @@ upload_iso() {
         return 0
     fi
 
-    # Upload ISO
-    if scp "$iso_file" "$PROXMOX_USER@$PROXMOX_HOST:/var/lib/vz/template/iso/"; then
+    # Upload ISO (resolve symlinks and find actual ISO file)
+    local real_iso_file
+    real_iso_file=$(readlink -f "$iso_file")
+    
+    # If the resolved path is a directory, find the ISO file inside it
+    if [[ -d "$real_iso_file" ]]; then
+        real_iso_file=$(find "$real_iso_file" -name "*.iso" -type f | head -1)
+    fi
+    
+    if [[ ! -f "$real_iso_file" ]]; then
+        log_error "Could not find actual ISO file for: $iso_name"
+        return 1
+    fi
+    
+    if scp "$real_iso_file" "$PROXMOX_USER@$PROXMOX_HOST:/var/lib/vz/template/iso/$iso_name"; then
         log_success "Uploaded ISO: $iso_name"
         return 0
     else
@@ -268,7 +281,7 @@ create_template() {
 
     # Configure VM
     local config_cmds=(
-        "qm set $vm_id --scsi0 $STORAGE_POOL:vm-$vm_id-disk-0"
+        "qm set $vm_id --scsi0 $STORAGE_POOL:$vm_id/vm-$vm_id-disk-0.raw"
         "qm set $vm_id --boot c --bootdisk scsi0"
         "qm set $vm_id --ide2 $STORAGE_POOL:cloudinit"
         "qm set $vm_id --serial0 socket --vga serial0"
@@ -308,8 +321,13 @@ create_templates() {
 
     # Process each ISO file
     for iso_file in "$ISO_DIR"/*.iso; do
-        if [[ ! -f "$iso_file" ]]; then
+        if [[ ! -e "$iso_file" && "$iso_file" == *"*.iso" ]]; then
             log_warning "No ISO files found in $ISO_DIR"
+            continue
+        fi
+        
+        # Skip if this is the unexpanded glob pattern
+        if [[ "$iso_file" == *"*.iso" ]]; then
             continue
         fi
 
