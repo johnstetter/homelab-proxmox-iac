@@ -47,6 +47,7 @@ ssh_keys/
 inventory/
 kubeconfig/
 cloud-init/
+build/
 
 # Ignore backup files
 *.backup

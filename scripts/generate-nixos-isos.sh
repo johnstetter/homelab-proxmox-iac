@@ -70,7 +70,7 @@ EXAMPLES:
     $0 --clean --output-dir /tmp/isos    # Clean build and custom output
 
 REQUIREMENTS:
-    - nixos-generators must be installed
+    - Nix package manager must be installed
     - NixOS configurations must exist in $NIXOS_DIR
 
 EOF
@@ -129,12 +129,11 @@ parse_args() {
 check_prerequisites() {
     log_info "Checking prerequisites..."
 
-    # Check if nixos-generators is installed
-    if ! command -v nixos-generators &> /dev/null; then
-        log_error "nixos-generators is not installed. Please install it first:"
-        log_error "  nix-env -iA nixpkgs.nixos-generators"
-        log_error "  # or"
-        log_error "  nix profile install nixpkgs#nixos-generators"
+    # Check if Nix is available
+    if ! command -v nix &> /dev/null; then
+        log_error "Nix package manager is not installed. Please install it first:"
+        log_error "  curl -L https://nixos.org/nix/install | sh"
+        log_error "  source ~/.nix-profile/etc/profile.d/nix.sh"
         exit 1
     fi
 
@@ -188,7 +187,7 @@ create_iso_config() {
   # ISO-specific configuration
   isoImage = {
     isoName = "nixos-k8s-$node_type-$env-\${config.system.nixos.label}-\${pkgs.stdenv.hostPlatform.system}.iso";
-    volumeID = "NIXOS_K8S_\${lib.toUpper "$env"}_\${lib.toUpper "$node_type"}";
+    volumeID = "NIXOS_K8S_\${pkgs.lib.toUpper "$env"}_\${pkgs.lib.toUpper "$node_type"}";
     makeEfiBootable = true;
     makeUsbBootable = true;
   };
@@ -305,9 +304,9 @@ generate_iso() {
     local config_file
     config_file=$(create_iso_config "$node_type" "$env")
 
-    # Generate ISO using nixos-generators
-    log_info "Running nixos-generators..."
-    if nixos-generators -f iso -c "$config_file" -o "$iso_path" 2>&1 | tee -a "$LOG_DIR/iso-generation.log"; then
+    # Generate ISO using nixos-generators via nix run
+    log_info "Running nixos-generators via nix run..."
+    if NIX_PATH="nixos-config=$config_file:nixpkgs=channel:nixos-unstable" nix --extra-experimental-features 'nix-command flakes' run 'github:nix-community/nixos-generators' -- -f iso -o "$iso_path" 2>&1 | tee -a "$LOG_DIR/iso-generation.log"; then
         log_success "Generated ISO: $iso_path"
         
         # Get ISO size
