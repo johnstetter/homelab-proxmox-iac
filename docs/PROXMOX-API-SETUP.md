@@ -151,12 +151,27 @@ pveum user token add terraform@pve terraform --comment "Terraform automation tok
 
 ### Using curl
 
+⚠️ **Important**: Use single quotes to avoid shell interpretation of the `!` character:
+
 ```bash
 # Test API access (replace with your values)
-curl -k -H "Authorization: PVEAPIToken=terraform@pve!terraform=YOUR_TOKEN_SECRET" \
+curl -k -H 'Authorization: PVEAPIToken=terraform@pve!terraform=YOUR_TOKEN_SECRET' \
   https://your-proxmox-server:8006/api2/json/version
 
 # Expected response: JSON with Proxmox version information
+# Example: {"data":{"version":"8.4.1","repoid":"xxxxxxxx"}}
+```
+
+**Common shell issues:**
+```bash
+# ❌ WRONG - Double quotes cause shell to interpret ! character
+curl -k -H "Authorization: PVEAPIToken=terraform@pve!terraform=secret" ...
+
+# ✅ CORRECT - Single quotes prevent shell interpretation
+curl -k -H 'Authorization: PVEAPIToken=terraform@pve!terraform=secret' ...
+
+# ✅ ALTERNATIVE - Escape the ! character
+curl -k -H "Authorization: PVEAPIToken=terraform@pve\!terraform=secret" ...
 ```
 
 ### Using Terraform
@@ -245,9 +260,10 @@ export PM_API_URL="https://your-proxmox-server:8006/api2/json"
 Solution: Ensure the role has all required permissions and propagate is enabled
 ```
 
-**Error: "authentication failure"**
+**Error: "authentication failure" or "no tokenid specified"**
 ```
 Solution: Check token ID format (user@realm!tokenid) and secret
+Common cause: Shell interpreting ! character - use single quotes around the header
 ```
 
 **Error: "SSL verification failed"**
