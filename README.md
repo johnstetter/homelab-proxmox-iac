@@ -24,6 +24,9 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 │   ├── S3-DYNAMODB-SETUP.md   # AWS backend configuration guide
 │   ├── TESTING-PLAN.md        # Comprehensive testing strategy
 │   └── TODO.md                # Prioritized task list
+├── journal/                   # Development journal
+│   ├── README.md              # Journal overview and methodology
+│   └── phase-1-retrospective.md # Phase 1 AI-assisted development experience
 ├── terraform/
 │   ├── main.tf                # Entry point for Terraform root module
 │   ├── providers.tf
@@ -101,6 +104,8 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 - **[docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md)** - Complete guide for creating NixOS VM templates
 - **[terraform/README.md](./terraform/README.md)** - Terraform module documentation
 - **[docs/CLAUDE.md](./docs/CLAUDE.md)** - Claude Code integration guide
+- **[journal/README.md](./journal/README.md)** - Development journal overview and methodology
+- **[journal/phase-1-retrospective.md](./journal/phase-1-retrospective.md)** - Phase 1 AI-assisted development experience
 
 ## 🔧 Development
 
