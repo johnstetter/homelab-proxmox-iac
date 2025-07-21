@@ -39,9 +39,10 @@ This Terraform module represents **Phase 1** of the deployment roadmap:
 ## Prerequisites
 
 1. **Proxmox VE** server with API access
-2. **NixOS VM template** created with nixos-generators (Phase 2)
-3. **Terraform** >= 1.0
-4. **Proxmox API token** with sufficient permissions
+2. **Proxmox API token** with sufficient permissions - Follow [../docs/PROXMOX-API-SETUP.md](../docs/PROXMOX-API-SETUP.md)
+3. **NixOS VM template** named `nixos-2311-cloud-init` - Follow [../docs/NIXOS-TEMPLATE-SETUP.md](../docs/NIXOS-TEMPLATE-SETUP.md)
+4. **Terraform** >= 1.0
+5. **AWS credentials** for S3 backend - Follow [../docs/S3-DYNAMODB-SETUP.md](../docs/S3-DYNAMODB-SETUP.md)
 
 ### Proxmox Setup
 

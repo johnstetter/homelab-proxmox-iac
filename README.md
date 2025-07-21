@@ -67,12 +67,14 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 ## 🚀 Quick Start (Local CLI)
 
 1. **Set up AWS backend**: Follow [docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)
-2. **Configure Terraform variables**: 
+2. **Set up Proxmox API access**: Follow [docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md) to create API tokens with proper permissions
+3. **Create NixOS VM template**: Follow [docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md) to create the required `nixos-2311-cloud-init` template
+4. **Configure Terraform variables**: 
    - Use environment-specific configuration files in `terraform/environments/`
    - Copy `terraform/environments/dev.tfvars.example` to `terraform/environments/dev.tfvars` and customize for development
    - Copy `terraform/environments/prod.tfvars.example` to `terraform/environments/prod.tfvars` and customize for production
-   - The `backend.tf` file uses variables for S3 bucket name, region, and DynamoDB table - configure these in your environment files
-3. **Deploy infrastructure locally**: 
+   - Update with your actual Proxmox API credentials and S3 backend details
+5. **Deploy infrastructure locally**: 
    ```bash
    cd terraform/
    
@@ -85,8 +87,8 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
    terraform plan -var-file="environments/prod.tfvars"
    terraform apply -var-file="environments/prod.tfvars"
    ```
-4. **Phase 2 - NixOS**: Follow [docs/README-phase2.md](./docs/README-phase2.md) for NixOS configuration
-5. **Testing**: Use the comprehensive [docs/TESTING-PLAN.md](./docs/TESTING-PLAN.md) to validate your setup
+6. **Phase 2 - NixOS**: Follow [docs/README-phase2.md](./docs/README-phase2.md) for NixOS configuration
+7. **Testing**: Use the comprehensive [docs/TESTING-PLAN.md](./docs/TESTING-PLAN.md) to validate your setup
 
 ## 📚 Documentation
 
@@ -95,6 +97,8 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 - **[docs/README-phase2.md](./docs/README-phase2.md)** - Phase 2 NixOS implementation guide
 - **[docs/README-roadmap.md](./docs/README-roadmap.md)** - Complete multi-phase development roadmap
 - **[docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)** - AWS backend configuration guide
+- **[docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md)** - Proxmox API token setup with required permissions
+- **[docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md)** - Complete guide for creating NixOS VM templates
 - **[terraform/README.md](./terraform/README.md)** - Terraform module documentation
 - **[docs/CLAUDE.md](./docs/CLAUDE.md)** - Claude Code integration guide
 
@@ -105,10 +109,11 @@ For development commands and architecture overview, see [docs/CLAUDE.md](./docs/
 ## 🎯 Multi-Phase Architecture
 
 **Phase 1** - Terraform + Proxmox Automation ✅
-- ✅ Terraform infrastructure provisioning
-- ✅ Proxmox VM management
+- ✅ Terraform infrastructure provisioning with environment-specific configs
+- ✅ Proxmox VM management with proper API token setup
 - ✅ AWS S3/DynamoDB backend for state management
-- ✅ Local CLI workflow established
+- ✅ Local CLI workflow established and tested
+- ✅ Comprehensive documentation and setup guides
 - 🎯 GitLab CI/CD pipeline (stretch goal)
 
 **Phase 2** - NixOS Node Configuration ⏳
