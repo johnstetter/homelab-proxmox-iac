@@ -24,7 +24,7 @@ The Terraform configuration expects a VM template named `nixos-2311-cloud-init` 
 ```bash
 # On Proxmox server, download NixOS ISO
 cd /var/lib/vz/template/iso/
-wget https://releases.nixos.org/nixos/23.11/nixos-23.11.6094.59075d5e4e9e-x86_64-linux.iso
+wget https://releases.nixos.org/nixos/25.05/nixos-25.05.805252.b43c397f6c21/nixos-minimal-25.05.805252.b43c397f6c21-x86_64-linux.iso
 ```
 
 ### Step 2: Create VM in Proxmox
