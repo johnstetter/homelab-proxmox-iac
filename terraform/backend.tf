@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = var.backend_bucket_name
-    key            = var.backend_key
-    region         = var.backend_region
-    dynamodb_table = var.backend_dynamodb_table
-    encrypt        = var.backend_encrypt
+    bucket         = "stetter-k8s-infra-terraform-state"
+    key            = "k8s-infra/dev/terraform.tfstate"
+    region         = "us-east-2"
+    dynamodb_table = "k8s-infra-terraform-locks"
+    encrypt        = true
   }
 }

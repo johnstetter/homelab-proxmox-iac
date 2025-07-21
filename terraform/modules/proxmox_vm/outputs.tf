@@ -50,7 +50,7 @@ output "ssh_connection" {
 # VM Status
 output "vm_status" {
   description = "Current status of the VM"
-  value       = proxmox_vm_qemu.vm.vm_state
+  value       = "created" # Static value since vm_state attribute doesn't exist
 }
 
 # Tags

@@ -1,33 +1,3 @@
-# Terraform Backend Configuration
-variable "backend_bucket_name" {
-  description = "S3 bucket name for Terraform state"
-  type        = string
-  default     = "k8s-infra-terraform-state"
-}
-
-variable "backend_key" {
-  description = "S3 key path for Terraform state file"
-  type        = string
-  default     = "k8s-infra/terraform.tfstate"
-}
-
-variable "backend_region" {
-  description = "AWS region for S3 bucket and DynamoDB table"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "backend_dynamodb_table" {
-  description = "DynamoDB table name for state locking"
-  type        = string
-  default     = "k8s-infra-terraform-locks"
-}
-
-variable "backend_encrypt" {
-  description = "Enable encryption for Terraform state in S3"
-  type        = bool
-  default     = true
-}
 
 # Proxmox Provider Variables
 variable "proxmox_api_url" {
@@ -105,7 +75,7 @@ variable "control_plane_count" {
   description = "Number of control plane nodes"
   type        = number
   default     = 3
-  
+
   validation {
     condition     = var.control_plane_count >= 1 && var.control_plane_count <= 5
     error_message = "Control plane count must be between 1 and 5."
@@ -141,7 +111,7 @@ variable "worker_node_count" {
   description = "Number of worker nodes"
   type        = number
   default     = 3
-  
+
   validation {
     condition     = var.worker_node_count >= 1 && var.worker_node_count <= 10
     error_message = "Worker node count must be between 1 and 10."

@@ -31,9 +31,9 @@ output "control_plane_nodes" {
   description = "Information about control plane nodes"
   value = {
     for i, node in module.k8s_control_plane : i => {
-      name       = node.vm_name
-      ip_address = node.ip_address
-      vm_id      = node.vm_id
+      name           = node.vm_name
+      ip_address     = node.ip_address
+      vm_id          = node.vm_id
       ssh_connection = node.ssh_connection
     }
   }
@@ -49,9 +49,9 @@ output "worker_nodes" {
   description = "Information about worker nodes"
   value = {
     for i, node in module.k8s_worker_nodes : i => {
-      name       = node.vm_name
-      ip_address = node.ip_address
-      vm_id      = node.vm_id
+      name           = node.vm_name
+      ip_address     = node.ip_address
+      vm_id          = node.vm_id
       ssh_connection = node.ssh_connection
     }
   }
@@ -66,9 +66,9 @@ output "worker_node_ips" {
 output "load_balancer" {
   description = "Information about load balancer"
   value = var.enable_load_balancer ? {
-    name       = module.k8s_load_balancer[0].vm_name
-    ip_address = module.k8s_load_balancer[0].ip_address
-    vm_id      = module.k8s_load_balancer[0].vm_id
+    name           = module.k8s_load_balancer[0].vm_name
+    ip_address     = module.k8s_load_balancer[0].ip_address
+    vm_id          = module.k8s_load_balancer[0].vm_id
     ssh_connection = module.k8s_load_balancer[0].ssh_connection
   } : null
 }
@@ -117,11 +117,11 @@ output "ssh_commands" {
   description = "SSH commands to connect to nodes"
   value = {
     control_plane = [
-      for node in module.k8s_control_plane : 
+      for node in module.k8s_control_plane :
       "ssh -i ${local_file.k8s_private_key.filename} ${node.ssh_connection}"
     ]
     workers = [
-      for node in module.k8s_worker_nodes : 
+      for node in module.k8s_worker_nodes :
       "ssh -i ${local_file.k8s_private_key.filename} ${node.ssh_connection}"
     ]
     load_balancer = var.enable_load_balancer ? [
@@ -133,7 +133,7 @@ output "ssh_commands" {
 # Quick Start Information
 output "quick_start_info" {
   description = "Quick start information for the cluster"
-  value = <<-EOT
+  value       = <<-EOT
     Kubernetes Cluster: ${var.cluster_name}
     
     Control Plane Nodes: ${length(module.k8s_control_plane)}
