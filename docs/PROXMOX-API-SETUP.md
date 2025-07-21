@@ -58,24 +58,39 @@ We'll create a custom role with minimal permissions needed for VM management.
 
 #### Required Permissions
 
+**Complete permissions list for telmate/proxmox provider:**
+
 **VM Management:**
 ```
-VM.Allocate    # Create/delete VMs
-VM.Config.Disk # Configure VM disks
-VM.Config.CPU  # Configure VM CPU
-VM.Config.Memory # Configure VM memory
-VM.Config.Network # Configure VM networking
-VM.Config.Options # Configure VM options
-VM.Monitor     # Monitor VM status
-VM.PowerMgmt   # Start/stop/reset VMs
-VM.Console     # Access VM console (optional)
+VM.Allocate           # Create/delete VMs
+VM.Config.Disk        # Configure VM disks
+VM.Config.CPU         # Configure VM CPU
+VM.Config.Memory      # Configure VM memory
+VM.Config.Network     # Configure VM networking
+VM.Config.Options     # Configure VM options
+VM.Config.CDROM       # Configure CD-ROM/ISO mounting
+VM.Config.Cloudinit   # Configure cloud-init settings
+VM.Config.HWType      # Configure hardware type
+VM.Monitor            # Monitor VM status
+VM.PowerMgmt          # Start/stop/reset VMs
+VM.Console            # Access VM console
+VM.Audit              # Read VM information
+VM.Clone              # Clone VMs from templates
+VM.Migrate            # Migrate VMs between nodes
 ```
 
 **Storage Management:**
 ```
-Datastore.AllocateSpace # Allocate disk space
+Datastore.AllocateSpace    # Allocate disk space
 Datastore.AllocateTemplate # Use VM templates
-Datastore.Audit # Read storage information
+Datastore.Audit            # Read storage information
+```
+
+**System Management:**
+```
+Sys.Audit      # Read system information
+Sys.Console    # System console access
+Sys.Modify     # Modify system settings
 ```
 
 **Resource Management:**
@@ -84,16 +99,11 @@ Pool.Allocate  # Use resource pools (if applicable)
 SDN.Use        # Software Defined Networking (if used)
 ```
 
-**System Information:**
-```
-Sys.Audit      # Read system information
-```
-
 ### Using CLI
 
 ```bash
-# Create the terraform role with required permissions
-pveum role add TerraformProvisioner -privs "VM.Allocate,VM.Config.Disk,VM.Config.CPU,VM.Config.Memory,VM.Config.Network,VM.Config.Options,VM.Monitor,VM.PowerMgmt,Datastore.AllocateSpace,Datastore.AllocateTemplate,Datastore.Audit,Pool.Allocate,Sys.Audit"
+# Create the terraform role with complete required permissions
+pveum role add TerraformProvisioner -privs "VM.Allocate,VM.Config.Disk,VM.Config.CPU,VM.Config.Memory,VM.Config.Network,VM.Config.Options,VM.Config.CDROM,VM.Config.Cloudinit,VM.Config.HWType,VM.Monitor,VM.PowerMgmt,VM.Console,VM.Audit,VM.Clone,VM.Migrate,Datastore.AllocateSpace,Datastore.AllocateTemplate,Datastore.Audit,Sys.Audit,Sys.Console,Sys.Modify,Pool.Allocate"
 ```
 
 ## Step 3: Assign Permissions
