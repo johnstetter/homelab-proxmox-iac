@@ -33,7 +33,7 @@ output "ssh_user" {
 # Resource Information
 output "cores" {
   description = "Number of CPU cores assigned to the VM"
-  value       = proxmox_vm_qemu.vm.cores
+  value       = var.cores
 }
 
 output "memory" {
