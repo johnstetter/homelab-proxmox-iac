@@ -19,7 +19,14 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 ├── README.md                  # This file
 ├── docs/                      # Documentation
 │   ├── CLAUDE.md              # Claude Code integration guide
+│   ├── DISK-RESIZE-GUIDE.md   # Proxmox disk resize procedures
+│   ├── GITLAB-CI-SETUP.md     # GitLab CI/CD configuration guide
+│   ├── NIXOS-TEMPLATE-INSTALLATION.md # Legacy NixOS template guide
+│   ├── NIXOS-TEMPLATE-SETUP.md # NixOS template creation guide
+│   ├── PROXMOX-API-SETUP.md   # Proxmox API token configuration
+│   ├── PROXMOX-CLI-TROUBLESHOOTING.md # Proxmox CLI debugging
 │   ├── README-phase2.md       # Phase 2 NixOS implementation guide
+│   ├── README-prompt.md       # AI prompt engineering guide
 │   ├── README-roadmap.md      # Multi-phase development roadmap
 │   ├── S3-DYNAMODB-SETUP.md   # AWS backend configuration guide
 │   ├── TESTING-PLAN.md        # Comprehensive testing strategy
@@ -50,10 +57,11 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 │       ├── control.nix       # Prod control plane config
 │       └── worker.nix        # Prod worker config
 ├── scripts/                   # Automation scripts
-│   ├── populate-nixos-configs.sh
-│   ├── generate-nixos-isos.sh
-│   ├── create-proxmox-templates.sh
-│   └── validate-phase2.sh
+│   ├── create-proxmox-templates.sh  # Create Proxmox VM templates
+│   ├── generate-nixos-iso.sh        # Generate NixOS ISO images
+│   ├── populate-nixos-configs.sh    # Populate NixOS configurations
+│   ├── setup-gitlab-aws-iam.sh      # Setup GitLab CI AWS credentials
+│   └── validate-phase2.sh           # Validate Phase 2 implementation
 ├── gitlab-ci.yml              # GitLab CI/CD pipeline
 └── .gitignore
 ```
@@ -72,6 +80,7 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 1. **Set up AWS backend**: Follow [docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)
 2. **Set up Proxmox API access**: Follow [docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md) to create API tokens with proper permissions
 3. **Create NixOS VM template**: Follow [docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md) to create the required `nixos-2311-cloud-init` template
+4. **Set up GitLab CI/CD** (optional): Follow [docs/GITLAB-CI-SETUP.md](./docs/GITLAB-CI-SETUP.md) to configure automated pipelines
 4. **Configure Terraform variables**: 
    - Use environment-specific configuration files in `terraform/environments/`
    - Copy `terraform/environments/dev.tfvars.example` to `terraform/environments/dev.tfvars` and customize for development
@@ -95,17 +104,31 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 
 ## 📚 Documentation
 
-- **[docs/TODO.md](./docs/TODO.md)** - Prioritized task list and current issues
-- **[docs/TESTING-PLAN.md](./docs/TESTING-PLAN.md)** - Comprehensive testing strategy
-- **[docs/README-phase2.md](./docs/README-phase2.md)** - Phase 2 NixOS implementation guide
-- **[docs/README-roadmap.md](./docs/README-roadmap.md)** - Complete multi-phase development roadmap
+### Setup and Configuration
 - **[docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)** - AWS backend configuration guide
 - **[docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md)** - Proxmox API token setup with required permissions
 - **[docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md)** - Complete guide for creating NixOS VM templates
-- **[terraform/README.md](./terraform/README.md)** - Terraform module documentation
+- **[docs/GITLAB-CI-SETUP.md](./docs/GITLAB-CI-SETUP.md)** - GitLab CI/CD pipeline configuration and AWS authentication
+
+### Implementation Guides
+- **[docs/README-phase2.md](./docs/README-phase2.md)** - Phase 2 NixOS implementation guide
+- **[docs/README-roadmap.md](./docs/README-roadmap.md)** - Complete multi-phase development roadmap
+- **[docs/TESTING-PLAN.md](./docs/TESTING-PLAN.md)** - Comprehensive testing strategy
+
+### Troubleshooting and Maintenance
+- **[docs/PROXMOX-CLI-TROUBLESHOOTING.md](./docs/PROXMOX-CLI-TROUBLESHOOTING.md)** - Proxmox CLI debugging procedures
+- **[docs/DISK-RESIZE-GUIDE.md](./docs/DISK-RESIZE-GUIDE.md)** - Proxmox disk resize procedures
+- **[docs/TODO.md](./docs/TODO.md)** - Prioritized task list and current issues
+
+### Development Resources
 - **[docs/CLAUDE.md](./docs/CLAUDE.md)** - Claude Code integration guide
+- **[docs/README-prompt.md](./docs/README-prompt.md)** - AI prompt engineering guide
+- **[terraform/README.md](./terraform/README.md)** - Terraform module documentation
 - **[journal/README.md](./journal/README.md)** - Development journal overview and methodology
 - **[journal/phase-1-retrospective.md](./journal/phase-1-retrospective.md)** - Phase 1 AI-assisted development experience
+
+### Legacy Documentation
+- **[docs/NIXOS-TEMPLATE-INSTALLATION.md](./docs/NIXOS-TEMPLATE-INSTALLATION.md)** - Legacy NixOS template guide (superseded by NIXOS-TEMPLATE-SETUP.md)
 
 ## 🔧 Development
 
@@ -119,7 +142,7 @@ For development commands and architecture overview, see [docs/CLAUDE.md](./docs/
 - ✅ AWS S3/DynamoDB backend for state management
 - ✅ Local CLI workflow established and tested
 - ✅ Comprehensive documentation and setup guides
-- 🎯 GitLab CI/CD pipeline (stretch goal)
+- ✅ GitLab CI/CD pipeline with AWS authentication and security best practices
 
 **Phase 2** - NixOS Node Configuration ⏳
 - ⏳ NixOS ISO generation with nixos-generators

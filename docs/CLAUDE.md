@@ -83,6 +83,7 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 
 **Automation Scripts** (`scripts/`):
 - `generate-nixos-iso.sh`: Creates single base NixOS ISO using nixos-generators
+- `setup-gitlab-aws-iam.sh`: Creates AWS IAM user for GitLab CI/CD authentication
 - `create-proxmox-templates.sh`: Automates Proxmox base template creation
 - `validate-phase2.sh`: Validates Phase 2 implementation
 
