@@ -49,6 +49,9 @@ kubeconfig/
 cloud-init/
 build/
 
+# Ignore ISO files
+*.iso
+
 # Ignore backup files
 *.backup
 *.bak

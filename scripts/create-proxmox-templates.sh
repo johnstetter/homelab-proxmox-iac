@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # create-proxmox-templates.sh
-# Automates Proxmox template creation from generated NixOS ISOs
+# Creates a single base NixOS template for Proxmox VMs
 
 set -euo pipefail
 
@@ -15,11 +15,13 @@ TEMPLATES_DIR="$BUILD_DIR/templates"
 
 # Default values
 PROXMOX_HOST=""
-PROXMOX_USER="root@pam"
+PROXMOX_USER="root"
 PROXMOX_NODE=""
-STORAGE_POOL="local"
+STORAGE_POOL="local-zfs-tank"
 ISO_STORAGE="local"
-TEMPLATE_START_ID=9000
+TEMPLATE_ID=9100
+TEMPLATE_NAME="nixos-base-template"
+ISO_NAME="nixos-base-template.iso"
 DRY_RUN=false
 
 # Colors for output
@@ -63,7 +65,7 @@ OPTIONS:
     --proxmox-node NODE     Proxmox node name (default: auto-detect)
     --storage STORAGE       Storage pool for VM disks (default: $STORAGE_POOL)
     --iso-storage STORAGE   Storage for ISO files (default: $ISO_STORAGE)
-    --template-start-id ID  Starting VM ID for templates (default: $TEMPLATE_START_ID)
+    --template-id ID        VM ID for base template (default: $TEMPLATE_ID)
     --dry-run               Show what would be done without executing
     --help                  Show this help message
 
@@ -104,8 +106,8 @@ parse_args() {
                 ISO_STORAGE="$2"
                 shift 2
                 ;;
-            --template-start-id)
-                TEMPLATE_START_ID="$2"
+            --template-id)
+                TEMPLATE_ID="$2"
                 shift 2
                 ;;
             --dry-run)
@@ -136,10 +138,10 @@ parse_args() {
 check_prerequisites() {
     log_info "Checking prerequisites..."
 
-    # Check if ISOs exist
-    if [[ ! -d "$ISO_DIR" ]] || [[ -z "$(ls -A "$ISO_DIR" 2>/dev/null)" ]]; then
-        log_error "No ISOs found in $ISO_DIR"
-        log_error "Run ./scripts/generate-nixos-isos.sh first"
+    # Check if base template ISO exists
+    if [[ ! -f "$ISO_DIR/$ISO_NAME" ]]; then
+        log_error "Base template ISO not found: $ISO_DIR/$ISO_NAME"
+        log_error "Run nixos-generate -f iso -c ./nixos/automated-template.nix -o $ISO_DIR/$ISO_NAME first"
         exit 1
     fi
 
@@ -245,20 +247,9 @@ create_template() {
     local vm_id="$2"
     local iso_name
     local template_name
-    local node_type
-    local env
 
     iso_name=$(basename "$iso_file")
-    
-    # Extract node type and environment from ISO name
-    if [[ "$iso_name" =~ nixos-k8s-([^-]+)-([^.]+)\.iso ]]; then
-        node_type="${BASH_REMATCH[1]}"
-        env="${BASH_REMATCH[2]}"
-        template_name="nixos-2311-k8s-$node_type-$env"
-    else
-        log_error "Cannot parse ISO name: $iso_name"
-        return 1
-    fi
+    template_name="$TEMPLATE_NAME"
 
     log_info "Creating template: $template_name (VM ID: $vm_id)"
 
@@ -267,27 +258,28 @@ create_template() {
         return 1
     fi
 
-    # Create VM
-    local create_cmd="qm create $vm_id --name $template_name --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26"
+    # Create VM with proper display configuration and BIOS boot
+    local create_cmd="qm create $vm_id --name $template_name --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26 --vga qxl --bios seabios"
     if ! execute_proxmox_cmd "$create_cmd" "Creating VM $vm_id"; then
         return 1
     fi
 
-    # Import disk from ISO
-    local import_cmd="qm importdisk $vm_id /var/lib/vz/template/iso/$iso_name $STORAGE_POOL"
-    if ! execute_proxmox_cmd "$import_cmd" "Importing disk for VM $vm_id"; then
+    # Create 20GB disk for installation target
+    local create_disk_cmd="qm set $vm_id --scsi0 $STORAGE_POOL:20"
+    if ! execute_proxmox_cmd "$create_disk_cmd" "Creating 20GB target disk for VM $vm_id"; then
         return 1
     fi
 
-    # Configure VM
+    # Configure VM with ISO in CD drive and proper boot order
     local config_cmds=(
-        "qm set $vm_id --scsi0 $STORAGE_POOL:$vm_id/vm-$vm_id-disk-0.raw"
-        "qm set $vm_id --boot c --bootdisk scsi0"
+        "qm set $vm_id --ide0 $ISO_STORAGE:iso/$iso_name,media=cdrom"
+        "qm set $vm_id --boot order=ide0\\;scsi0"
         "qm set $vm_id --ide2 $STORAGE_POOL:cloudinit"
-        "qm set $vm_id --serial0 socket --vga serial0"
         "qm set $vm_id --agent enabled=1"
         "qm set $vm_id --ciuser nixos"
         "qm set $vm_id --sshkey /root/.ssh/authorized_keys"
+        "qm set $vm_id --ostype l26"
+        "qm set $vm_id --args '-device virtio-rng-pci'"
     )
 
     for cmd in "${config_cmds[@]}"; do
@@ -296,92 +288,61 @@ create_template() {
         fi
     done
 
-    # Convert to template
-    local template_cmd="qm template $vm_id"
-    if ! execute_proxmox_cmd "$template_cmd" "Converting VM $vm_id to template"; then
-        return 1
-    fi
-
-    # Save template information
-    local template_info="{\"vm_id\": $vm_id, \"name\": \"$template_name\", \"iso\": \"$iso_name\", \"node_type\": \"$node_type\", \"environment\": \"$env\"}"
-    echo "$template_info" >> "$TEMPLATES_DIR/template-info.json"
-
-    log_success "Created template: $template_name"
+    # Manual installation required - leave VM ready for user
+    log_info "VM $vm_id created and ready for NixOS installation"
+    log_info ""
+    log_info "To complete template creation:"
+    log_info "  1. Boot VM from ISO and run automated installation: /etc/nixos-auto-install.sh"
+    log_info "  2. After installation and shutdown, convert to template:"
+    log_info "     ssh root@$PROXMOX_HOST 'qm set $vm_id --delete ide0'"
+    log_info "     ssh root@$PROXMOX_HOST 'qm set $vm_id --boot order=scsi0'"
+    log_info "     ssh root@$PROXMOX_HOST 'qm template $vm_id'"
+    log_info ""
+    log_info "The automated installation will:"
+    log_info "  - Create LVM partitioning for disk resize capabilities"
+    log_info "  - Install NixOS with GRUB bootloader (BIOS compatible)"
+    log_info "  - Configure cloud-init, SSH, and essential packages"
+    log_info ""
+    
+    # Don't convert to template - leave as VM for manual work
     return 0
 }
 
-# Create all templates
-create_templates() {
-    local vm_id=$TEMPLATE_START_ID
-    local success_count=0
-    local failed_count=0
-    local template_mapping=()
+# Create single base template
+create_base_template() {
+    log_info "Creating base NixOS template..."
 
-    log_info "Creating Proxmox templates from ISOs..."
+    # Check if VM ID is already in use
+    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm status $TEMPLATE_ID" &>/dev/null; then
+        log_error "VM ID $TEMPLATE_ID already in use"
+        log_error "Please choose a different template ID or remove existing VM"
+        return 1
+    fi
 
-    # Process each ISO file
-    for iso_file in "$ISO_DIR"/*.iso; do
-        if [[ ! -e "$iso_file" && "$iso_file" == *"*.iso" ]]; then
-            log_warning "No ISO files found in $ISO_DIR"
-            continue
-        fi
-        
-        # Skip if this is the unexpanded glob pattern
-        if [[ "$iso_file" == *"*.iso" ]]; then
-            continue
-        fi
-
-        local iso_name
-        iso_name=$(basename "$iso_file")
-        
-        log_info "Processing ISO: $iso_name"
-
-        # Check if VM ID is already in use
-        while ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm status $vm_id" &>/dev/null; do
-            log_warning "VM ID $vm_id already in use, trying next ID"
-            ((vm_id++))
-        done
-
-        if create_template "$iso_file" "$vm_id"; then
-            template_mapping+=("$iso_name:$vm_id")
-            ((success_count++))
-        else
-            ((failed_count++))
-        fi
-
-        ((vm_id++))
-    done
-
-    # Create template mapping file
-    if [[ ${#template_mapping[@]} -gt 0 ]]; then
+    # Create the template
+    if create_template "$ISO_DIR/$ISO_NAME" "$TEMPLATE_ID"; then
+        # Create template info file
         {
             echo "{"
-            echo "  \"templates\": ["
-            for i in "${!template_mapping[@]}"; do
-                local mapping="${template_mapping[$i]}"
-                local iso_name="${mapping%:*}"
-                local template_id="${mapping#*:}"
-                echo "    {\"iso\": \"$iso_name\", \"vm_id\": $template_id}$([ $i -lt $((${#template_mapping[@]} - 1)) ] && echo ",")"
-            done
-            echo "  ],"
+            echo "  \"template\": {"
+            echo "    \"vm_id\": $TEMPLATE_ID,"
+            echo "    \"name\": \"$TEMPLATE_NAME\","
+            echo "    \"iso\": \"$ISO_NAME\""
+            echo "  },"
             echo "  \"created_at\": \"$(date -Iseconds)\","
             echo "  \"proxmox_host\": \"$PROXMOX_HOST\","
             echo "  \"proxmox_node\": \"$PROXMOX_NODE\""
             echo "}"
-        } > "$TEMPLATES_DIR/proxmox-template-ids.json"
-    fi
+        } > "$TEMPLATES_DIR/base-template-info.json"
 
-    # Summary
-    log_info "Template creation summary:"
-    log_info "  Successful: $success_count"
-    log_info "  Failed: $failed_count"
-
-    if [[ $failed_count -gt 0 ]]; then
-        log_error "Some templates failed to create. Check logs for details."
+        log_success "Base template created successfully!"
+        log_info "Template ID: $TEMPLATE_ID"
+        log_info "Template Name: $TEMPLATE_NAME"
+        return 0
+    else
+        log_error "Failed to create base template"
         return 1
     fi
-
-    return 0
 }
 
 # Main execution
@@ -397,21 +358,22 @@ main() {
     # Setup build environment
     setup_build_env
 
-    # Create templates
-    if create_templates; then
-        log_success "All templates created successfully!"
-        log_info "Template information saved to: $TEMPLATES_DIR/proxmox-template-ids.json"
+    # Create base template
+    if create_base_template; then
+        log_success "Base template creation completed!"
+        log_info "Template information saved to: $TEMPLATES_DIR/base-template-info.json"
         log_info "Next steps:"
-        log_info "  1. Update terraform.tfvars with template names"
-        log_info "  2. Run terraform plan/apply to test deployment"
+        log_info "  1. Update terraform.tfvars to use vm_template = \"$TEMPLATE_NAME\""
+        log_info "  2. Use nixos-generators for node-specific configurations"
+        log_info "  3. Run terraform plan/apply to test deployment"
         
-        if [[ -f "$TEMPLATES_DIR/proxmox-template-ids.json" ]]; then
-            log_info "Available templates:"
-            cat "$TEMPLATES_DIR/proxmox-template-ids.json" | jq -r '.templates[] | "  - VM ID \(.vm_id): \(.iso)"' 2>/dev/null || \
-            grep -o '"vm_id": [0-9]*' "$TEMPLATES_DIR/proxmox-template-ids.json" | sed 's/"vm_id": /  - VM ID /'
+        if [[ -f "$TEMPLATES_DIR/base-template-info.json" ]]; then
+            log_info "Base template details:"
+            cat "$TEMPLATES_DIR/base-template-info.json" | jq -r '"  - VM ID: \(.template.vm_id) (\(.template.name))"' 2>/dev/null || \
+            echo "  - VM ID: $TEMPLATE_ID ($TEMPLATE_NAME)"
         fi
     else
-        log_error "Template creation failed!"
+        log_error "Base template creation failed!"
         exit 1
     fi
 }

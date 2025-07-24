@@ -21,7 +21,7 @@ environment  = "dev"
 
 # Proxmox Infrastructure
 proxmox_node = "pve"
-vm_template  = "nixos-2311-k8s-control-dev"  # NixOS template created by Phase 2 scripts
+vm_template  = "nixos-base-template"  # Single base NixOS template for all node types
 disk_storage = "local-lvm"
 
 # Control Plane Configuration - Minimal for dev

@@ -9,9 +9,20 @@ variable "target_node" {
   type        = string
 }
 
+variable "proxmox_host" {
+  description = "Proxmox host IP for SSH commands"
+  type        = string
+}
+
 variable "template" {
   description = "Template to clone from"
   type        = string
+}
+
+variable "full_clone" {
+  description = "Create a full clone instead of linked clone"
+  type        = bool
+  default     = true
 }
 
 # Resource Configuration

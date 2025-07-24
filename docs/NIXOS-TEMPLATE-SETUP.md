@@ -1,36 +1,33 @@
 # NixOS VM Template Creation for Proxmox
 
-This guide covers the **automated** creation of NixOS VM templates for Phase 2 Kubernetes infrastructure.
+This guide covers the **automated** creation of a single base NixOS VM template for Phase 2 Kubernetes infrastructure.
 
 ## Overview
 
-The project uses a **fully automated approach** to create Proxmox templates with:
-- NixOS with cloud-init support
-- Pre-configured Kubernetes components (kubelet, containerd, etc.)
+The project uses a **single base template approach** with:
+- One base NixOS template with automated installation
+- Cloud-init support for post-provisioning configuration
 - SSH key authentication
 - Qemu guest agent
+- LVM partitioning for disk resize capabilities
 
 ## Automated Workflow (Recommended)
 
-### Phase 2 Automated Template Creation
+### Single Base Template Approach
 
-The project includes complete automation scripts for template creation:
+The project creates a single base template that can be used for all node types (control plane and worker):
 
 ```bash
-# 1. Populate NixOS configurations with Kubernetes components
-./scripts/populate-nixos-configs.sh
-
-# 2. Source Nix environment and generate cloud-init NixOS ISOs
+# 1. Source Nix environment and generate base template ISO
 source ~/.nix-profile/etc/profile.d/nix.sh
-./scripts/generate-nixos-isos.sh
+./scripts/generate-nixos-iso.sh
 
-# 3. Create Proxmox templates from the generated ISOs
+# 2. Create Proxmox base template from the generated ISO
 ./scripts/create-proxmox-templates.sh --proxmox-host YOUR_PROXMOX_IP
 ```
 
-This creates templates like:
-- `nixos-2311-k8s-controlplane-dev` (for control plane nodes)
-- `nixos-2311-k8s-worker-dev` (for worker nodes)
+This creates a single template:
+- `nixos-base-template` (VM ID 9100) - Base template for all node types
 
 ### Prerequisites
 
@@ -40,8 +37,12 @@ This creates templates like:
 curl -L https://nixos.org/nix/install | sh
 source ~/.nix-profile/etc/profile.d/nix.sh
 
-# Or enter nix-shell for the session
-nix-shell -p nixos-generators
+# Enable experimental features
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+
+# Install nixos-generators
+nix profile add nixpkgs#nixos-generators
 ```
 
 2. **SSH access to Proxmox server**:
@@ -55,59 +56,56 @@ ssh-copy-id -i ~/.ssh/proxmox_key root@YOUR_PROXMOX_IP
 
 ### Step-by-Step Template Creation
 
-#### Step 1: Generate NixOS Configurations
-
-```bash
-# Populates nixos/ directory with Kubernetes-ready configurations
-./scripts/populate-nixos-configs.sh
-
-# This creates configurations in:
-# - nixos/dev/controlplane.nix
-# - nixos/dev/worker.nix  
-# - nixos/prod/controlplane.nix
-# - nixos/prod/worker.nix
-```
-
-#### Step 2: Generate Cloud-Init ISOs
+#### Step 1: Generate Base Template ISO
 
 ```bash
 # Source Nix environment (required for each session)
 source ~/.nix-profile/etc/profile.d/nix.sh
 
-# Generate ISOs for all configurations
-./scripts/generate-nixos-isos.sh
+# Generate base template ISO with automated installation
+./scripts/generate-nixos-iso.sh
 
-# Or generate specific ones:
-./scripts/generate-nixos-isos.sh --type control --env dev
-./scripts/generate-nixos-isos.sh --type worker --env dev
+# This creates: build/isos/nixos-base-template.iso
 ```
 
-This creates ISOs in `build/isos/`:
-- `nixos-k8s-control-dev.iso`
-- `nixos-k8s-worker-dev.iso`
+**Note**: ISO generation can take 10-30 minutes depending on your machine as it builds a complete NixOS system with automated installation script.
 
-**Note**: ISO generation can take 10-30 minutes depending on your machine as it builds a complete NixOS system.
-
-#### Step 3: Create Proxmox Templates
+#### Step 2: Create Proxmox Base Template
 
 ```bash
-# Upload ISOs and create templates automatically
-./scripts/create-proxmox-templates.sh --proxmox-host 192.168.1.100
+# Create base template from ISO
+./scripts/create-proxmox-templates.sh --proxmox-host 192.168.1.5
 
 # Optional parameters:
 ./scripts/create-proxmox-templates.sh \
-    --proxmox-host 192.168.1.100 \
-    --proxmox-user root@pam \
-    --storage local-lvm \
-    --template-start-id 9000
+    --proxmox-host 192.168.1.5 \
+    --proxmox-user root \
+    --storage local-zfs-tank \
+    --template-id 9100
 ```
 
 This script will:
-1. Upload generated ISOs to Proxmox
-2. Create VMs from the ISOs
-3. Configure cloud-init, networking, and qemu-agent
-4. Convert VMs to templates
-5. Generate `build/templates/proxmox-template-ids.json` with template mappings
+1. Upload base template ISO to Proxmox
+2. Create VM 9100 with 20GB disk and QXL display
+3. Configure for automated NixOS installation
+4. Leave VM ready for manual installation completion
+5. Provide instructions to convert to template
+
+#### Step 3: Complete Template Creation
+
+After the script creates the VM, you need to:
+
+1. **Start the VM and complete installation**:
+   - The ISO contains automated installation script
+   - Installation uses LVM partitioning for resize capabilities
+
+2. **Convert to template after installation**:
+```bash
+ssh root@YOUR_PROXMOX_IP 'qm stop 9100'
+ssh root@YOUR_PROXMOX_IP 'qm set 9100 --delete ide0'
+ssh root@YOUR_PROXMOX_IP 'qm set 9100 --boot order=scsi0'
+ssh root@YOUR_PROXMOX_IP 'qm template 9100'
+```
 
 ### Script Locations and Where to Run
 
@@ -116,26 +114,23 @@ All commands should be run from the **project root** directory (`/home/stetter/c
 ```bash
 cd /home/stetter/code/k8s-infra/
 
-# These scripts expect to be run from project root:
-./scripts/populate-nixos-configs.sh       # Populates nixos/ directory
-
 # Source Nix environment before ISO generation
 source ~/.nix-profile/etc/profile.d/nix.sh
-./scripts/generate-nixos-isos.sh          # Creates build/isos/ (10-30 min)
+./scripts/generate-nixos-iso.sh          # Creates build/isos/ (10-30 min)
 
-./scripts/create-proxmox-templates.sh     # Uses build/isos/, creates templates
+./scripts/create-proxmox-templates.sh     # Uses build/isos/, creates base template
 ```
 
 ### Nix Environment Setup
 
-The `generate-nixos-isos.sh` script uses `nix run` to access nixos-generators:
+The `generate-nixos-iso.sh` script uses nixos-generators:
 
 ```bash
 # Always source Nix environment first (required for each terminal session):
 source ~/.nix-profile/etc/profile.d/nix.sh
 
 # Then run the ISO generation script:
-./scripts/generate-nixos-isos.sh
+./scripts/generate-nixos-iso.sh
 
 # You can also add the source command to your shell profile:
 echo 'source ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
@@ -145,14 +140,14 @@ echo 'source ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
 
 ## Verification
 
-### Check Generated Templates
+### Check Generated Template
 
 ```bash
 # List templates on Proxmox
 ssh root@YOUR_PROXMOX_IP "qm list | grep template"
 
 # View template details
-cat build/templates/proxmox-template-ids.json
+cat build/templates/base-template-info.json
 ```
 
 ### Test Template with Terraform
@@ -160,11 +155,8 @@ cat build/templates/proxmox-template-ids.json
 Update your `terraform.tfvars`:
 
 ```hcl
-# Use the generated template names for development:
-vm_template = "nixos-2311-k8s-control-dev"
-
-# Or for production:
-vm_template = "nixos-2311-k8s-control-prod"
+# Use the single base template for all deployments:
+vm_template = "nixos-base-template"
 ```
 
 Test deployment:
@@ -174,29 +166,42 @@ cd terraform/
 terraform plan
 ```
 
-## Template Features
+## Base Template Features
 
-The automated templates include:
+The automated base template includes:
 
 **Base NixOS System:**
-- ✅ NixOS 25.05 (updated from 23.11)
-- ✅ Cloud-init with ext4 filesystem support  
+- ✅ NixOS 24.11 (stable)
+- ✅ Cloud-init with LVM filesystem support  
 - ✅ Qemu guest agent
 - ✅ SSH key authentication (no password auth)
 - ✅ nixos user with sudo access
+- ✅ LVM partitioning for disk resize capabilities
 
-**Kubernetes Pre-configuration:**
-- ✅ Containerd container runtime
-- ✅ Kubelet, kubeadm, kubectl pre-installed
-- ✅ Required kernel modules (br_netfilter, overlay)
-- ✅ Kubernetes networking sysctls configured
-- ✅ Swap disabled
-- ✅ Memory cgroup enabled
-
-**Networking & Security:**
+**Essential Packages:**
+- ✅ vim, git, curl, wget pre-installed
+- ✅ systemd-boot bootloader (EFI)
 - ✅ NetworkManager for interface management
-- ✅ Firewall configured for Kubernetes ports
-- ✅ Docker group access for nixos user
+
+**Post-Provisioning Ready:**
+- ✅ Cloud-init enabled for role-specific configuration
+- ✅ Ready for nixos-generators node-specific setup
+- ✅ Supports both control plane and worker configurations
+
+## Architecture Benefits
+
+### Single Template Approach
+
+**Why One Template?**
+- **Simplicity**: One template to maintain instead of four (control/worker × dev/prod)
+- **Flexibility**: Role-specific configuration via cloud-init and nixos-generators
+- **Efficiency**: Faster deployment with post-provisioning configuration
+- **Maintenance**: Easier updates and version management
+
+**Post-Provisioning Configuration:**
+- Node-specific packages (kubelet, containerd) added via cloud-init
+- Environment-specific settings applied during deployment
+- Kubernetes configuration handled by nixos-generators in Phase 2
 
 ## Troubleshooting
 
@@ -204,10 +209,13 @@ The automated templates include:
 
 **nixos-generators not found:**
 ```bash
+# Install nixos-generators
+nix profile add nixpkgs#nixos-generators
+
 # Source Nix environment first
 source ~/.nix-profile/etc/profile.d/nix.sh
 # Then run the script
-./scripts/generate-nixos-isos.sh
+./scripts/generate-nixos-iso.sh
 ```
 
 **SSH connection failed:**
@@ -221,60 +229,46 @@ ssh-add -l
 
 **ISO generation fails:**
 ```bash
-# Check if configurations exist
-ls -la nixos/dev/
-ls -la nixos/prod/
+# Check if NixOS configuration exists
+ls -la nixos/automated-template.nix
 
-# Run populate script first
-./scripts/populate-nixos-configs.sh
+# Check Nix experimental features
+cat ~/.config/nix/nix.conf
 ```
 
 **Template creation fails:**
 ```bash
-# Check if ISOs were generated
-ls -la build/isos/
+# Check if ISO was generated
+ls -la build/isos/nixos-base-template.iso
 
 # Check Proxmox storage
 ssh root@YOUR_PROXMOX_IP "df -h /var/lib/vz"
 ```
 
-### Validation Script
+## Disk Resize Capabilities
+
+The base template uses LVM partitioning to support disk resizing:
 
 ```bash
-# Validate the entire Phase 2 setup
-./scripts/validate-phase2.sh
+# Resize VM disk in Proxmox
+qm resize <vmid> scsi0 +10G
+
+# Inside VM, extend LVM
+sudo lvextend -l +100%FREE /dev/vg0/root
+sudo resize2fs /dev/vg0/root
 ```
 
-## Manual Template Creation (Fallback)
-
-If automation fails, you can manually create a basic template:
-
-1. Download NixOS ISO:
-```bash
-cd /var/lib/vz/template/iso/
-wget https://releases.nixos.org/nixos/25.05/nixos-25.05.805252.b43c397f6c21/nixos-minimal-25.05.805252.b43c397f6c21-x86_64-linux.iso
-```
-
-2. Create VM in Proxmox web interface:
-   - VM ID: 9000
-   - Name: `nixos-2311-cloud-init`
-   - ISO: Select downloaded NixOS ISO
-   - Memory: 2048 MB
-   - Disk: 32 GB (virtio-scsi)
-   - Network: virtio, bridge=vmbr0
-   - Enable Qemu Agent: ✅
-
-3. Install NixOS with basic cloud-init configuration
-4. Convert to template: `qm template 9000`
+See `docs/disk-resize-guide.md` for complete resize procedures.
 
 ## Next Steps
 
-1. **Run the automation scripts** in order
-2. **Update terraform.tfvars** with generated template names
-3. **Test with Terraform**: `terraform plan` 
-4. **Deploy cluster**: `terraform apply`
-5. **Phase 3**: Kubernetes cluster initialization (future)
+1. **Generate base template**: Run `./scripts/generate-nixos-iso.sh`
+2. **Create Proxmox template**: Run `./scripts/create-proxmox-templates.sh`
+3. **Update terraform.tfvars**: Set `vm_template = "nixos-base-template"`
+4. **Test with Terraform**: `terraform plan` 
+5. **Deploy cluster**: `terraform apply`
+6. **Phase 3**: Use nixos-generators for role-specific configuration
 
 ---
 
-**Note**: This automated approach replaces manual template creation and integrates directly with the Terraform infrastructure provisioning.
+**Note**: This single template approach simplifies infrastructure management while maintaining flexibility for different node types and environments through post-provisioning configuration.

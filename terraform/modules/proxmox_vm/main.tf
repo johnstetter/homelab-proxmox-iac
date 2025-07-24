@@ -3,6 +3,7 @@ resource "proxmox_vm_qemu" "vm" {
   name        = var.vm_name
   target_node = var.target_node
   clone       = var.template
+  full_clone  = var.full_clone
 
   # VM Configuration
   cpu {
@@ -26,12 +27,13 @@ resource "proxmox_vm_qemu" "vm" {
   # Enable VNC console
   define_connection_info = true
 
-  # Disk Configuration
+  # Disk Configuration - use specified disk size
   disk {
     slot    = "scsi0"
     type    = "disk"
     storage = var.disk_storage
     size    = var.disk_size
+    format  = "raw"   # Explicit format for ZFS
     cache   = "writeback"
   }
 
@@ -80,6 +82,8 @@ resource "proxmox_vm_qemu" "vm" {
 
   # Cloud-init will complete automatically
 }
+
+# Disk expansion is no longer needed since we use var.disk_size directly
 
 # NixOS configuration will be handled by nixos-generators in Phase 2
 # This will create NixOS ISO images that can be used as VM templates
