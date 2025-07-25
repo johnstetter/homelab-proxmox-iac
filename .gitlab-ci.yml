@@ -141,6 +141,11 @@ validate:phase2:
   tags:
     - homelab
   before_script:
+    - apk add --no-cache bash curl wget unzip
+    - wget https://releases.hashicorp.com/terraform/1.13.0-beta1/terraform_1.13.0-beta1_linux_amd64.zip
+    - unzip terraform_1.13.0-beta1_linux_amd64.zip
+    - mv terraform /usr/local/bin/
+    - nix-env -iA nixpkgs.nixos-generators
     - chmod +x scripts/*.sh
   script:
     - ./scripts/validate-phase2.sh
