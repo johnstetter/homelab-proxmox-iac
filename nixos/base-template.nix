@@ -81,11 +81,11 @@
   ];
 
   # Set state version
-  system.stateVersion = "25.11";
+  system.stateVersion = "24.11";
 }
 EOF
   '';
 
   # Set state version for the ISO
-  system.stateVersion = "25.11";
+  system.stateVersion = "24.11";
 }
