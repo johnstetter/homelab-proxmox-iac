@@ -61,7 +61,7 @@ tf:plan:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   allow_failure: true  # Allow failure until runner is properly configured
 
-# Apply Terraform changes (manual for safety)
+# Apply Terraform changes (manual for safety, main branch only)
 tf:apply:
   stage: deploy
   script:
@@ -75,7 +75,7 @@ tf:apply:
     name: production
     action: start
 
-# Destroy infrastructure (manual and protected)
+# Destroy infrastructure (manual and protected, main branch only)
 tf:destroy:
   stage: destroy
   script:
@@ -87,69 +87,3 @@ tf:destroy:
     name: production
     action: stop
   allow_failure: false
-
-# Phase 2: NixOS ISO Generation (runs on commits to main)
-nixos:generate-isos:
-  stage: deploy
-  image: nixos/nix:latest
-  tags:
-    - homelab
-  before_script:
-    - nix-env -iA nixpkgs.nixos-generators
-    - chmod +x scripts/*.sh
-  script:
-    - ./scripts/populate-nixos-configs.sh --force
-    - ./scripts/generate-nixos-isos.sh
-  artifacts:
-    name: nixos-isos
-    paths:
-      - build/isos/
-      - build/logs/
-    expire_in: 1 month
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
-  allow_failure: true
-
-# Phase 2: Proxmox Template Creation (requires Proxmox access)
-proxmox:create-templates:
-  stage: deploy
-  image: nixos/nix:latest
-  tags:
-    - homelab
-  before_script:
-    - chmod +x scripts/*.sh
-  script:
-    - ./scripts/create-proxmox-templates.sh
-  dependencies:
-    - nixos:generate-isos
-  artifacts:
-    name: proxmox-templates
-    paths:
-      - build/templates/
-      - build/logs/
-    expire_in: 1 month
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
-  allow_failure: true
-
-# Validation job to check Phase 2 implementation
-validate:phase2:
-  stage: validate
-  image: nixos/nix:latest
-  tags:
-    - homelab
-  before_script:
-    - apk add --no-cache bash curl wget unzip
-    - wget https://releases.hashicorp.com/terraform/1.13.0-beta1/terraform_1.13.0-beta1_linux_amd64.zip
-    - unzip terraform_1.13.0-beta1_linux_amd64.zip
-    - mv terraform /usr/local/bin/
-    - nix-env -iA nixpkgs.nixos-generators
-    - chmod +x scripts/*.sh
-  script:
-    - ./scripts/validate-phase2.sh
-  rules:
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  allow_failure: true
