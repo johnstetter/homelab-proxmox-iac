@@ -3,6 +3,7 @@
 variable "proxmox_api_url" {
   description = "Proxmox API URL"
   type        = string
+  default     = "https://192.168.1.5:8006/api2/json"
 }
 
 variable "proxmox_username" {
@@ -72,24 +73,26 @@ variable "environment" {
 variable "proxmox_node" {
   description = "Proxmox node name where VMs will be created"
   type        = string
+  default     = "core"
 }
 
 variable "vm_template" {
   description = "VM template name to clone from"
   type        = string
+  default     = "nixos-base-template"
 }
 
 variable "disk_storage" {
   description = "Storage pool for VM disks"
   type        = string
-  default     = "local-lvm"
+  default     = "local-zfs-tank"
 }
 
 # Control Plane Configuration
 variable "control_plane_count" {
   description = "Number of control plane nodes"
   type        = number
-  default     = 3
+  default     = 1
 
   validation {
     condition     = var.control_plane_count >= 1 && var.control_plane_count <= 5
@@ -106,26 +109,26 @@ variable "control_plane_cores" {
 variable "control_plane_memory" {
   description = "Memory in MB for control plane nodes"
   type        = number
-  default     = 4096
+  default     = 2048
 }
 
 variable "control_plane_disk_size" {
   description = "Disk size in GB for control plane nodes"
   type        = string
-  default     = "50G"
+  default     = "30G"
 }
 
 variable "control_plane_ip_base" {
   description = "Base IP address for control plane nodes (without last octet)"
   type        = string
-  default     = "192.168.1.10"
+  default     = "192.168.1.7"
 }
 
 # Worker Node Configuration
 variable "worker_node_count" {
   description = "Number of worker nodes"
   type        = number
-  default     = 3
+  default     = 2
 
   validation {
     condition     = var.worker_node_count >= 1 && var.worker_node_count <= 10
@@ -136,25 +139,25 @@ variable "worker_node_count" {
 variable "worker_node_cores" {
   description = "Number of CPU cores for worker nodes"
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "worker_node_memory" {
   description = "Memory in MB for worker nodes"
   type        = number
-  default     = 8192
+  default     = 4096
 }
 
 variable "worker_node_disk_size" {
   description = "Disk size in GB for worker nodes"
   type        = string
-  default     = "100G"
+  default     = "50G"
 }
 
 variable "worker_node_ip_base" {
   description = "Base IP address for worker nodes (without last octet)"
   type        = string
-  default     = "192.168.1.20"
+  default     = "192.168.1.8"
 }
 
 # Load Balancer Configuration
