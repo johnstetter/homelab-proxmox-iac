@@ -17,13 +17,13 @@ resource "proxmox_vm_qemu" "vm" {
   bootdisk = var.bootdisk
   scsihw   = var.scsihw
   os_type  = var.os_type
-  
+
   # VNC/Console Configuration
   vga {
     type   = "qxl"
     memory = 16
   }
-  
+
   # Enable VNC console
   define_connection_info = true
 
@@ -33,7 +33,7 @@ resource "proxmox_vm_qemu" "vm" {
     type    = "disk"
     storage = var.disk_storage
     size    = var.disk_size
-    format  = "raw"   # Explicit format for ZFS
+    format  = "raw" # Explicit format for ZFS
     cache   = "writeback"
   }
 
@@ -61,10 +61,10 @@ resource "proxmox_vm_qemu" "vm" {
   # IP Configuration  
   ipconfig0  = "ip=${var.ip_address},gw=${var.gateway}"
   nameserver = var.nameserver
-  
+
   # Additional cloud-init settings for NixOS
-  cicustom   = ""
-  ciupgrade  = false
+  cicustom  = ""
+  ciupgrade = false
 
   # NixOS will be configured via nixos-generators in Phase 2
   # For now, basic cloud-init with SSH key only
