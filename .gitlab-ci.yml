@@ -1,96 +1,40 @@
 # GitLab CI/CD Pipeline for NixOS Kubernetes Infrastructure  
 # 
-# STATUS: Work in Progress - Requires GitLab runner setup
+# STATUS: Phase 2 - Basic validation only
 # Primary workflow is local CLI usage (see README.md)
-# CI/CD is a stretch goal for automation
+# Full deployment pipeline planned for Phase 3+
 
 variables:
   TERRAFORM_VERSION: "1.13.0-beta1"
   TF_ROOT: "${CI_PROJECT_DIR}/terraform"
-  TF_STATE_NAME: "${CI_PROJECT_NAME}"
-  TF_CACHE_KEY: "${CI_PROJECT_ID}-terraform"
-  # Set to 'true' to enable Terraform debug output
-  TF_LOG: "INFO"
 
 # Global settings
 default:
   image: hashicorp/terraform:${TERRAFORM_VERSION}
   tags:
-    - homelab  # Your local runner tag
+    - homelab
   before_script:
     - cd ${TF_ROOT}
     - terraform --version
-    - |
-      if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-        echo "ERROR: AWS credentials not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in GitLab CI/CD variables"
-        exit 1
-      fi
-    - terraform init -backend-config="key=${TF_STATE_NAME}/terraform.tfstate"
-
-# Cache Terraform plugins and modules
-cache:
-  key: ${TF_CACHE_KEY}
-  paths:
-    - ${TF_ROOT}/.terraform
-    - ${TF_ROOT}/.terraform.lock.hcl
 
 stages:
   - validate
-  - plan
-  - deploy
-  - destroy
 
-# Validate Terraform configuration
+# Validate Terraform configuration (Phase 2 scope)
 tf:validate:
   stage: validate
   script:
+    - terraform init -backend=false  # Skip backend for validation
     - terraform fmt -check -recursive  
     - terraform validate
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_COMMIT_TAG =~ /^test-pipeline-/
-  allow_failure: true  # Allow failure until runner is properly configured
+  allow_failure: true
 
-# Plan Terraform changes
-tf:plan:
-  stage: plan
-  script:
-    - terraform plan -input=false -out=tfplan
-  artifacts:
-    name: plan
-    paths:
-      - ${TF_ROOT}/tfplan
-    expire_in: 1 week
-  rules:
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_COMMIT_TAG =~ /^test-pipeline-/
-  allow_failure: true  # Allow failure until runner is properly configured
-
-# Apply Terraform changes (manual for safety, main branch only)
-tf:apply:
-  stage: deploy
-  script:
-    - terraform apply -input=false tfplan
-  dependencies:
-    - tf:plan
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
-  environment:
-    name: production
-    action: start
-
-# Destroy infrastructure (manual and protected, main branch only)
-tf:destroy:
-  stage: destroy
-  script:
-    - terraform destroy -auto-approve
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
-  environment:
-    name: production
-    action: stop
-  allow_failure: false
+# TODO: Phase 3+ - Add multi-environment deployment pipeline
+# - Environment-specific variables (DEV_*, PROD_*)  
+# - Branch-based deployment (dev branch → dev env, main → prod)
+# - S3 backend integration
+# - Manual approval gates
+# - Proper plan/apply workflow
