@@ -32,14 +32,14 @@ terraform fmt -recursive
 
 ### NixOS Phase 2 Operations
 ```bash
-# Populate NixOS configurations
-./scripts/populate-nixos-configs.sh
+# Source Nix environment (required for ISO generation)
+source ~/.nix-profile/etc/profile.d/nix.sh
 
-# Generate NixOS ISOs
-./scripts/generate-nixos-isos.sh
+# Generate single base NixOS ISO (takes 10-30 minutes)
+./scripts/generate-nixos-iso.sh
 
-# Create Proxmox templates
-./scripts/create-proxmox-templates.sh
+# Create Proxmox base template
+./scripts/create-proxmox-templates.sh --proxmox-host YOUR_PROXMOX_IP
 
 # Validate Phase 2 implementation
 ./scripts/validate-phase2.sh
@@ -82,9 +82,9 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 - Separate configurations for control plane and worker nodes
 
 **Automation Scripts** (`scripts/`):
-- `populate-nixos-configs.sh`: Generates NixOS configurations with Kubernetes components
-- `generate-nixos-isos.sh`: Creates cloud-init NixOS ISOs using nixos-generators
-- `create-proxmox-templates.sh`: Automates Proxmox template creation
+- `generate-nixos-iso.sh`: Creates single base NixOS ISO using nixos-generators
+- `setup-gitlab-aws-iam.sh`: Creates AWS IAM user for GitLab CI/CD authentication
+- `create-proxmox-templates.sh`: Automates Proxmox base template creation
 - `validate-phase2.sh`: Validates Phase 2 implementation
 
 ### Multi-Phase Architecture
@@ -94,15 +94,15 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 - Proxmox VM management via Telmate provider
 - AWS S3/DynamoDB backend for state management and locking
 
-**Phase 2** - NixOS Node Configuration:
-- NixOS ISO generation with nixos-generators
-- Kubernetes component pre-configuration
-- Proxmox template automation
+**Phase 2** - NixOS Base Template:
+- Single base NixOS ISO with automated installation
+- LVM partitioning for disk resize capabilities
+- Cloud-init ready for post-provisioning configuration
 
-**Phase 3** - Kubernetes Installation (future):
-- Cluster initialization with kubeadm
-- CNI networking configuration
-- Multi-node HA setup
+**Phase 3** - Kubernetes Configuration (future):
+- Role-specific configuration via nixos-generators
+- Kubernetes component installation (kubelet, containerd)
+- Cluster initialization and networking
 
 ### Cluster Topologies
 
@@ -125,21 +125,22 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 - `terraform/terraform.tfvars.example`: Example configuration with all options
 
 ### NixOS Integration
-- NixOS configurations reference `nixos/${environment}/${role}.nix`
-- Templates support both dev and prod environments
-- Configurations include Kubernetes components (kubelet, containerd, etc.)
+- Single base template: `nixos/automated-template.nix`
+- Post-provisioning configuration via cloud-init
+- Role-specific setup handled by future nixos-generators integration
 
 ### Generated Artifacts
 - SSH keys stored in `terraform/ssh_keys/`
 - Ansible inventory generated at `terraform/inventory/hosts.yml`
 - Kubeconfig template at `terraform/kubeconfig/kubeconfig-template.yml`
-- Build artifacts in `build/isos/` and `build/templates/`
+- Base template ISO in `build/isos/nixos-base-template.iso`
+- Template info in `build/templates/base-template-info.json`
 
 ## Development Workflow
 
 1. **Configure Environment**: Copy and edit `terraform/terraform.tfvars`
 2. **Phase 1**: Deploy base infrastructure with `terraform apply`
-3. **Phase 2**: Run NixOS scripts to populate configs and generate ISOs
+3. **Phase 2**: Generate base template ISO and create Proxmox template
 4. **Validation**: Use `./scripts/validate-phase2.sh` for testing
 5. **Iteration**: Use `terraform plan` before applying changes
 
@@ -155,7 +156,26 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 ## Dependencies
 
 - **Terraform** >= 1.0 with Telmate Proxmox provider
-- **Nix package manager** and **nixos-generators** for Phase 2
+- **Nix package manager** for Phase 2 (nixos-generators for base template creation)
 - **Proxmox VE** with API access and sufficient permissions
 - **AWS S3/DynamoDB** for Terraform state backend
 - **jq** for JSON processing in validation scripts
+
+### Nix Setup
+```bash
+# Install Nix (single-user installation)
+curl -L https://nixos.org/nix/install | sh
+
+# Source in current session
+source ~/.nix-profile/etc/profile.d/nix.sh
+
+# Enable experimental features for flakes
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+
+# Install nixos-generators
+nix profile add nixpkgs#nixos-generators
+
+# Optional: Add to shell profile for automatic loading
+echo 'source ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
+```

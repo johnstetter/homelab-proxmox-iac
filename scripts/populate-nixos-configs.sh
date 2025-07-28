@@ -511,6 +511,3 @@ main() {
 
 # Run main function with all arguments
 main "$@"
-EOF
-<line_count>334</line_count>
-</write_to_file>

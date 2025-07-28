@@ -1,3 +1,8 @@
+# Extract Proxmox host IP from API URL
+locals {
+  proxmox_host = regex("https://([^:]+):", var.proxmox_api_url)[0]
+}
+
 # Generate SSH key pair for VM access
 resource "tls_private_key" "k8s_ssh_key" {
   algorithm = "RSA"
@@ -31,9 +36,10 @@ module "k8s_control_plane" {
   count  = var.control_plane_count
 
   # VM Configuration
-  vm_name     = "${var.cluster_name}-control-${count.index + 1}-${random_string.cluster_suffix.result}"
-  target_node = var.proxmox_node
-  template    = var.vm_template
+  vm_name      = "${var.cluster_name}-control-${count.index + 1}-${random_string.cluster_suffix.result}"
+  target_node  = var.proxmox_node
+  template     = var.vm_template
+  proxmox_host = local.proxmox_host
 
   # Resource Allocation
   cores        = var.control_plane_cores
@@ -65,9 +71,10 @@ module "k8s_worker_nodes" {
   count  = var.worker_node_count
 
   # VM Configuration
-  vm_name     = "${var.cluster_name}-worker-${count.index + 1}-${random_string.cluster_suffix.result}"
-  target_node = var.proxmox_node
-  template    = var.vm_template
+  vm_name      = "${var.cluster_name}-worker-${count.index + 1}-${random_string.cluster_suffix.result}"
+  target_node  = var.proxmox_node
+  template     = var.vm_template
+  proxmox_host = local.proxmox_host
 
   # Resource Allocation
   cores        = var.worker_node_cores
@@ -99,9 +106,10 @@ module "k8s_load_balancer" {
   count  = var.enable_load_balancer ? 1 : 0
 
   # VM Configuration
-  vm_name     = "${var.cluster_name}-lb-${random_string.cluster_suffix.result}"
-  target_node = var.proxmox_node
-  template    = var.vm_template
+  vm_name      = "${var.cluster_name}-lb-${random_string.cluster_suffix.result}"
+  target_node  = var.proxmox_node
+  template     = var.vm_template
+  proxmox_host = local.proxmox_host
 
   # Resource Allocation
   cores        = var.load_balancer_cores

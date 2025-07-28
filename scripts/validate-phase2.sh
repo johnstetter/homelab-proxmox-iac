@@ -119,7 +119,7 @@ check_isos() {
 
     if [[ ! -d "$BUILD_DIR/isos" ]]; then
         log_warning "ISO directory not found: $BUILD_DIR/isos"
-        log_info "Run ./scripts/generate-nixos-isos.sh to generate ISOs"
+        log_info "Run ./scripts/generate-nixos-iso.sh to generate ISOs"
         return 1
     fi
 
@@ -128,7 +128,7 @@ check_isos() {
     
     if [[ $iso_count -eq 0 ]]; then
         log_warning "No ISOs found in $BUILD_DIR/isos"
-        log_info "Run ./scripts/generate-nixos-isos.sh to generate ISOs"
+        log_info "Run ./scripts/generate-nixos-iso.sh to generate ISOs"
         return 1
     else
         log_success "Found $iso_count ISO(s) in $BUILD_DIR/isos"
@@ -144,7 +144,7 @@ check_isos() {
 check_proxmox_templates() {
     log_info "Checking Proxmox templates..."
 
-    if [[ ! -f "$BUILD_DIR/templates/proxmox-template-ids.json" ]]; then
+    if [[ ! -f "$BUILD_DIR/templates/base-template-info.json" ]]; then
         log_warning "Proxmox template mapping not found"
         log_info "Run ./scripts/create-proxmox-templates.sh to create templates"
         return 1
@@ -154,7 +154,7 @@ check_proxmox_templates() {
     
     if command -v jq &> /dev/null; then
         local template_count
-        template_count=$(jq '.templates | length' "$BUILD_DIR/templates/proxmox-template-ids.json" 2>/dev/null || echo "0")
+        template_count=$(jq '.templates | length' "$BUILD_DIR/templates/base-template-info.json" 2>/dev/null || echo "0")
         log_info "Templates created: $template_count"
     fi
 
@@ -179,7 +179,8 @@ check_terraform() {
         "$TERRAFORM_DIR/providers.tf"
         "$TERRAFORM_DIR/versions.tf"
         "$TERRAFORM_DIR/outputs.tf"
-        "$TERRAFORM_DIR/terraform.tfvars.example"
+        "$TERRAFORM_DIR/environments/dev.tfvars.example"
+        "$TERRAFORM_DIR/environments/prod.tfvars.example"
     )
 
     for file in "${required_files[@]}"; do
@@ -196,7 +197,7 @@ check_terraform() {
         log_success "Terraform variables file exists: terraform.tfvars"
     else
         log_warning "Terraform variables file not found: terraform.tfvars"
-        log_info "Copy terraform.tfvars.example to terraform.tfvars and configure"
+        log_info "Copy environments/dev.tfvars.example to terraform.tfvars and configure"
     fi
 
     # Validate Terraform syntax
@@ -307,9 +308,9 @@ generate_report() {
         log_info ""
         log_info "Common fixes:"
         log_info "  - Run ./scripts/populate-nixos-configs.sh to create configurations"
-        log_info "  - Run ./scripts/generate-nixos-isos.sh to create ISOs"
+        log_info "  - Run ./scripts/generate-nixos-iso.sh to create ISOs"
         log_info "  - Run ./scripts/create-proxmox-templates.sh to create templates"
-        log_info "  - Copy terraform.tfvars.example to terraform.tfvars and configure"
+        log_info "  - Copy environments/dev.tfvars.example to terraform.tfvars and configure"
     fi
 }
 

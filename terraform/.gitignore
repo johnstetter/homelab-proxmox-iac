@@ -1,0 +1,35 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+terraform.tfplan
+terraform.tfplan.*
+.terraformrc
+terraform.rc
+
+# Generated SSH keys - contains sensitive private keys
+ssh_keys/
+
+# Generated inventory files - contains IP addresses and connection details
+inventory/
+
+# Generated kubeconfig templates
+kubeconfig/
+
+# Test VM directory
+test-vm/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

@@ -3,9 +3,12 @@ resource "proxmox_vm_qemu" "vm" {
   name        = var.vm_name
   target_node = var.target_node
   clone       = var.template
+  full_clone  = var.full_clone
 
   # VM Configuration
-  cores    = var.cores
+  cpu {
+    cores = var.cores
+  }
   memory   = var.memory
   onboot   = var.onboot
   agent    = var.agent
@@ -15,23 +18,39 @@ resource "proxmox_vm_qemu" "vm" {
   scsihw   = var.scsihw
   os_type  = var.os_type
 
-  # Disk Configuration
+  # VNC/Console Configuration
+  vga {
+    type   = "qxl"
+    memory = 16
+  }
+
+  # Enable VNC console
+  define_connection_info = true
+
+  # Disk Configuration - use specified disk size
   disk {
-    slot      = 0
-    type      = "scsi"
-    storage   = var.disk_storage
-    size      = var.disk_size
-    format    = "raw"
-    cache     = "writeback"
-    backup    = true
-    replicate = 1
+    slot    = "scsi0"
+    type    = "disk"
+    storage = var.disk_storage
+    size    = var.disk_size
+    format  = "raw" # Explicit format for ZFS
+    cache   = "writeback"
+  }
+
+  # Cloud-init disk
+  disk {
+    slot    = "ide2"
+    type    = "cloudinit"
+    storage = var.disk_storage
   }
 
   # Network Configuration
   network {
-    model  = "virtio"
-    bridge = var.network_bridge
-    tag    = var.network_vlan
+    id       = 0
+    model    = "virtio"
+    bridge   = var.network_bridge
+    tag      = var.network_vlan
+    firewall = false
   }
 
   # Cloud-init Configuration
@@ -39,9 +58,13 @@ resource "proxmox_vm_qemu" "vm" {
   cipassword = ""
   sshkeys    = var.ssh_public_key
 
-  # IP Configuration
+  # IP Configuration  
   ipconfig0  = "ip=${var.ip_address},gw=${var.gateway}"
   nameserver = var.nameserver
+
+  # Additional cloud-init settings for NixOS
+  cicustom  = ""
+  ciupgrade = false
 
   # NixOS will be configured via nixos-generators in Phase 2
   # For now, basic cloud-init with SSH key only
@@ -59,6 +82,8 @@ resource "proxmox_vm_qemu" "vm" {
 
   # Cloud-init will complete automatically
 }
+
+# Disk expansion is no longer needed since we use var.disk_size directly
 
 # NixOS configuration will be handled by nixos-generators in Phase 2
 # This will create NixOS ISO images that can be used as VM templates
