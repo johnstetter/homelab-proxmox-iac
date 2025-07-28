@@ -20,6 +20,11 @@ default:
   before_script:
     - cd ${TF_ROOT}
     - terraform --version
+    - |
+      if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+        echo "ERROR: AWS credentials not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in GitLab CI/CD variables"
+        exit 1
+      fi
     - terraform init -backend-config="key=${TF_STATE_NAME}/terraform.tfstate"
 
 # Cache Terraform plugins and modules
