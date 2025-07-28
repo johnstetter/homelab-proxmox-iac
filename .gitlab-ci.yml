@@ -56,7 +56,7 @@ tf:validate:
 tf:plan:
   stage: plan
   script:
-    - terraform plan -input=false -out=tfplan
+    - terraform plan -input=false -var-file=environments/dev.tfvars -out=tfplan
   artifacts:
     name: plan
     paths:
