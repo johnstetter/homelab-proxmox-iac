@@ -27,7 +27,7 @@ source ~/.nix-profile/etc/profile.d/nix.sh
 ```
 
 This creates a single template:
-- `nixos-base-template` (VM ID 9100) - Base template for all node types
+- `nixos-base-template` (VM ID auto-assigned starting from 9100) - Base template for all node types
 
 ### Prerequisites
 
@@ -81,12 +81,12 @@ source ~/.nix-profile/etc/profile.d/nix.sh
     --proxmox-host 192.168.1.5 \
     --proxmox-user root \
     --storage local-zfs-tank \
-    --template-id 9100
+    --template-id 9100  # Base ID - script will auto-increment if 9100 is in use
 ```
 
 This script will:
 1. Upload base template ISO to Proxmox
-2. Create VM 9100 with 20GB disk and QXL display
+2. Find next available VM ID (starting from 9100) and create VM with 20GB disk and QXL display
 3. Configure for automated NixOS installation
 4. Leave VM ready for manual installation completion
 5. Provide instructions to convert to template
@@ -96,16 +96,22 @@ This script will:
 After the script creates the VM, you need to:
 
 1. **Start the VM and complete installation**:
-   - The ISO contains automated installation script
+   - Boot the VM from the Proxmox console
+   - Login as `nixos` user (no password required)
+   - Run the automated installation script: `/etc/nixos-auto-install.sh`
+   - Wait for installation to complete and VM to shutdown automatically
    - Installation uses LVM partitioning for resize capabilities
 
 2. **Convert to template after installation**:
 ```bash
-ssh root@YOUR_PROXMOX_IP 'qm stop 9100'
-ssh root@YOUR_PROXMOX_IP 'qm set 9100 --delete ide0'
-ssh root@YOUR_PROXMOX_IP 'qm set 9100 --boot order=scsi0'
-ssh root@YOUR_PROXMOX_IP 'qm template 9100'
+# Replace <VM_ID> with the actual VM ID assigned (e.g., 9101)
+ssh root@YOUR_PROXMOX_IP 'qm stop <VM_ID>'
+ssh root@YOUR_PROXMOX_IP 'qm set <VM_ID> --delete ide0'
+ssh root@YOUR_PROXMOX_IP 'qm set <VM_ID> --boot order=scsi0'
+ssh root@YOUR_PROXMOX_IP 'qm template <VM_ID>'
 ```
+
+**Note**: The script will output the exact VM ID and commands to run. Check the script output for the specific commands.
 
 ### Script Locations and Where to Run
 
