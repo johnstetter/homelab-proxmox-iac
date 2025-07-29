@@ -75,6 +75,13 @@ EOF
       # Copy our pre-made configuration
       cp /etc/nixos/template-configuration.nix /mnt/etc/nixos/configuration.nix
 
+      # Create roles directory and copy role configurations
+      mkdir -p /mnt/etc/nixos/roles
+      cp /etc/nixos/roles/*.nix /mnt/etc/nixos/roles/ 2>/dev/null || true
+      
+      # Copy role setup script (if it exists)
+      cp /etc/nixos-role-setup.sh /mnt/etc/nixos/ 2>/dev/null || true
+
       # Install NixOS
       nixos-install --no-root-passwd --root /mnt
 
@@ -83,6 +90,10 @@ EOF
     '';
     mode = "0755";
   };
+
+  # Copy role configurations to ISO for installation
+  environment.etc."nixos/roles/control-plane.nix".source = ./roles/control-plane.nix;
+  environment.etc."nixos/roles/worker.nix".source = ./roles/worker.nix;
 
   # Pre-made configuration that gets copied during installation
   environment.etc."nixos/template-configuration.nix" = {
@@ -115,13 +126,16 @@ EOF
         # Enable QEMU guest agent for Proxmox
         services.qemuGuest.enable = true;
 
-        # Enable cloud-init for VM customization
-        services.cloud-init.enable = true;
+        # Enable cloud-init for VM customization and role assignment
+        services.cloud-init = {
+          enable = true;
+          network.enable = true;
+        };
 
         # User configuration - ensure nixos user has sudo access
         users.users.nixos = {
           isNormalUser = true;
-          extraGroups = [ "wheel" ];
+          extraGroups = [ "wheel" "docker" ];
         };
         
         # Enable sudo for wheel group without password
@@ -130,13 +144,78 @@ EOF
           wheelNeedsPassword = false;
         };
 
-        # System packages
+        # System packages - including Kubernetes prerequisites
         environment.systemPackages = with pkgs; [
           vim
           git
           curl
           wget
+          htop
+          jq
+          yq
+          kubectl
+          docker
+          containerd
+          cri-tools
+          ethtool
+          socat
+          conntrack-tools
+          ipset
+          iptables
         ];
+
+        # Container runtime configuration
+        virtualisation = {
+          docker = {
+            enable = true;
+            daemon.settings = {
+              exec-opts = [ "native.cgroupdriver=systemd" ];
+              log-driver = "json-file";
+              log-opts = {
+                max-size = "100m";
+              };
+              storage-driver = "overlay2";
+            };
+          };
+          containerd = {
+            enable = true;
+            settings = {
+              plugins."io.containerd.grpc.v1.cri" = {
+                systemd_cgroup = true;
+                sandbox_image = "registry.k8s.io/pause:3.9";
+              };
+            };
+          };
+        };
+
+        # Kernel modules for Kubernetes
+        boot.kernelModules = [ "br_netfilter" "overlay" "ip_vs" "ip_vs_rr" "ip_vs_wrr" "ip_vs_sh" ];
+        
+        # Sysctl settings for Kubernetes
+        boot.kernel.sysctl = {
+          "net.bridge.bridge-nf-call-iptables" = 1;
+          "net.bridge.bridge-nf-call-ip6tables" = 1;
+          "net.ipv4.ip_forward" = 1;
+          "net.ipv4.conf.all.forwarding" = 1;
+          "net.ipv6.conf.all.forwarding" = 1;
+        };
+
+        # Kubernetes kernel parameters
+        boot.kernelParams = [ "cgroup_enable=cpuset" "cgroup_memory=1" "cgroup_enable=memory" ];
+
+        # Firewall configuration for Kubernetes
+        networking.firewall = {
+          enable = true;
+          allowedTCPPorts = [ 22 80 443 6443 2379 2380 10250 10251 10252 ];
+          allowedUDPPorts = [ 8472 ]; # Flannel VXLAN
+        };
+
+        # Note: nixos user groups configured in installed template
+
+        # Disable swap (required for Kubernetes)
+        swapDevices = [ ];
+
+        # TODO: Add role assignment script later
 
         # Set state version (use 24.11 for current stable)
         system.stateVersion = "24.11";

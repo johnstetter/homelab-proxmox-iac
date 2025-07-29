@@ -19,7 +19,7 @@ PROXMOX_USER="root"
 PROXMOX_NODE=""
 STORAGE_POOL="local-zfs-tank"
 ISO_STORAGE="local"
-TEMPLATE_ID=9100
+TEMPLATE_ID_BASE=9100
 TEMPLATE_NAME="nixos-base-template"
 ISO_NAME="nixos-base-template.iso"
 DRY_RUN=false
@@ -65,7 +65,7 @@ OPTIONS:
     --proxmox-node NODE     Proxmox node name (default: auto-detect)
     --storage STORAGE       Storage pool for VM disks (default: $STORAGE_POOL)
     --iso-storage STORAGE   Storage for ISO files (default: $ISO_STORAGE)
-    --template-id ID        VM ID for base template (default: $TEMPLATE_ID)
+    --template-id ID        Base VM ID for templates (default: $TEMPLATE_ID_BASE, auto-increments)
     --dry-run               Show what would be done without executing
     --help                  Show this help message
 
@@ -107,7 +107,7 @@ parse_args() {
                 shift 2
                 ;;
             --template-id)
-                TEMPLATE_ID="$2"
+                TEMPLATE_ID_BASE="$2"
                 shift 2
                 ;;
             --dry-run)
@@ -178,6 +178,29 @@ setup_build_env() {
     log_success "Build environment ready"
 }
 
+# Find next available template ID
+find_available_template_id() {
+    local start_id="$1"
+    local current_id="$start_id"
+    
+    log_info "Finding available template ID starting from $start_id..." >&2
+    
+    while ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm status $current_id" &>/dev/null; do
+        log_info "Template ID $current_id is in use, trying next..." >&2
+        ((current_id++))
+        
+        # Safety limit to prevent infinite loop
+        if ((current_id > start_id + 100)); then
+            log_error "Could not find available template ID after checking 100 IDs" >&2
+            return 1
+        fi
+    done
+    
+    log_info "Found available template ID: $current_id" >&2
+    echo "$current_id"
+    return 0
+}
+
 # Execute Proxmox command
 execute_proxmox_cmd() {
     local cmd="$1"
@@ -199,6 +222,33 @@ execute_proxmox_cmd() {
     fi
 }
 
+# Clean up old ISOs on Proxmox (keep 3 most recent)
+cleanup_old_isos() {
+    local iso_pattern="nixos-base-template*.iso"
+    
+    log_info "Cleaning up old ISOs (keeping 3 most recent)..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log_info "[DRY RUN] Would clean up old ISOs matching: $iso_pattern"
+        return 0
+    fi
+    
+    # List ISOs sorted by modification time (newest first), skip first 3, remove the rest
+    local cleanup_cmd="cd /var/lib/vz/template/iso && ls -t $iso_pattern 2>/dev/null | tail -n +4 | xargs -r rm -f"
+    
+    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "$cleanup_cmd"; then
+        # Show what we kept
+        local kept_isos
+        kept_isos=$(ssh "$PROXMOX_USER@$PROXMOX_HOST" "cd /var/lib/vz/template/iso && ls -t $iso_pattern 2>/dev/null | head -3" || echo "None")
+        log_info "Kept most recent ISOs: $kept_isos"
+        log_success "Old ISO cleanup completed"
+    else
+        log_warning "ISO cleanup completed (no old ISOs to remove)"
+    fi
+    
+    return 0
+}
+
 # Upload ISO to Proxmox
 upload_iso() {
     local iso_file="$1"
@@ -212,11 +262,8 @@ upload_iso() {
         return 0
     fi
 
-    # Check if ISO already exists
-    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "test -f /var/lib/vz/template/iso/$iso_name"; then
-        log_warning "ISO already exists on Proxmox: $iso_name"
-        return 0
-    fi
+    # Clean up old ISOs first (keep 3 most recent)
+    cleanup_old_isos
 
     # Upload ISO (resolve symlinks and find actual ISO file)
     local real_iso_file
@@ -312,20 +359,19 @@ create_template() {
 create_base_template() {
     log_info "Creating base NixOS template..."
 
-    # Check if VM ID is already in use
-    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm status $TEMPLATE_ID" &>/dev/null; then
-        log_error "VM ID $TEMPLATE_ID already in use"
-        log_error "Please choose a different template ID or remove existing VM"
+    # Find available template ID
+    local template_id
+    if ! template_id=$(find_available_template_id "$TEMPLATE_ID_BASE"); then
         return 1
     fi
 
     # Create the template
-    if create_template "$ISO_DIR/$ISO_NAME" "$TEMPLATE_ID"; then
+    if create_template "$ISO_DIR/$ISO_NAME" "$template_id"; then
         # Create template info file
         {
             echo "{"
             echo "  \"template\": {"
-            echo "    \"vm_id\": $TEMPLATE_ID,"
+            echo "    \"vm_id\": $template_id,"
             echo "    \"name\": \"$TEMPLATE_NAME\","
             echo "    \"iso\": \"$ISO_NAME\""
             echo "  },"
@@ -336,7 +382,7 @@ create_base_template() {
         } > "$TEMPLATES_DIR/base-template-info.json"
 
         log_success "Base template created successfully!"
-        log_info "Template ID: $TEMPLATE_ID"
+        log_info "Template ID: $template_id"
         log_info "Template Name: $TEMPLATE_NAME"
         return 0
     else
@@ -370,7 +416,7 @@ main() {
         if [[ -f "$TEMPLATES_DIR/base-template-info.json" ]]; then
             log_info "Base template details:"
             cat "$TEMPLATES_DIR/base-template-info.json" | jq -r '"  - VM ID: \(.template.vm_id) (\(.template.name))"' 2>/dev/null || \
-            echo "  - VM ID: $TEMPLATE_ID ($TEMPLATE_NAME)"
+            echo "  - VM ID: $(cat "$TEMPLATES_DIR/base-template-info.json" | grep vm_id | cut -d: -f2 | tr -d ' ,') ($TEMPLATE_NAME)"
         fi
     else
         log_error "Base template creation failed!"
