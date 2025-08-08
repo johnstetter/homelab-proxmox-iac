@@ -37,6 +37,15 @@
       set -euo pipefail
 
       echo "Starting automated NixOS installation..."
+      
+      # Wait a bit for system to fully initialize
+      sleep 10
+      
+      # Verify we're in a live environment
+      if [[ -f /run/current-system ]]; then
+        echo "Already installed system detected, aborting auto-install"
+        exit 0
+      fi
 
       # Partition disk with LVM (MBR for BIOS boot)
       # Clear any existing partition table first
@@ -245,15 +254,19 @@ EOF
   systemd.services.nixos-auto-install = {
     description = "Automated NixOS Installation";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" ];
+    after = [ "systemd-udev-settle.service" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "/etc/nixos-auto-install.sh";
       StandardOutput = "journal";
       StandardError = "journal";
+      RemainAfterExit = true;
     };
-    # Only run if we're booted from the ISO (not an installed system)
-    unitConfig.ConditionPathExists = "!/mnt/etc/nixos/configuration.nix";
+    # Only run if we're booted from ISO (check for live system indicators)
+    unitConfig = {
+      ConditionPathExists = [ "!/run/current-system" "!/etc/NIXOS" ];
+      ConditionKernelCommandLine = "!systemd.unit=graphical.target";
+    };
   };
 
   # Set state version for the ISO  
