@@ -264,7 +264,10 @@ nixos-generate-config --root /mnt
       StandardOutput = "journal";
       StandardError = "journal";
       RemainAfterExit = true;
-      Environment = "PATH=/run/current-system/sw/bin";
+      Environment = [
+        "PATH=/run/current-system/sw/bin"
+        "NIX_PATH=nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos:nixos-config=/etc/nixos/configuration.nix:/nix/var/nix/profiles/per-user/root/channels"
+      ];
     };
     # Only run if we're booted from ISO (not an installed system)
     unitConfig = {
