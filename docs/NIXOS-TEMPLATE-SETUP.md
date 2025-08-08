@@ -88,30 +88,27 @@ This script will:
 1. Upload base template ISO to Proxmox
 2. Find next available VM ID (starting from 9100) and create VM with 20GB disk and QXL display
 3. Configure for automated NixOS installation
-4. Leave VM ready for manual installation completion
-5. Provide instructions to convert to template
+4. Start VM with automated systemd-managed installation
+5. Monitor installation progress and auto-convert to template
 
-#### Step 3: Complete Template Creation
+#### Step 3: Automated Template Creation
 
-After the script creates the VM, you need to:
+The script handles the complete template creation process automatically:
 
-1. **Start the VM and complete installation**:
-   - Boot the VM from the Proxmox console
-   - Login as `nixos` user (no password required)
-   - Run the automated installation script: `/etc/nixos-auto-install.sh`
-   - Wait for installation to complete and VM to shutdown automatically
-   - Installation uses LVM partitioning for resize capabilities
+1. **Automated Installation Process**:
+   - VM boots from ISO with systemd service `nixos-auto-install` enabled
+   - Installation runs automatically without manual intervention
+   - Creates LVM partitioning with 20GB disk and 4GB swap
+   - Installs NixOS with GRUB bootloader and cloud-init support
+   - VM shuts down automatically when installation completes
 
-2. **Convert to template after installation**:
-```bash
-# Replace <VM_ID> with the actual VM ID assigned (e.g., 9101)
-ssh root@YOUR_PROXMOX_IP 'qm stop <VM_ID>'
-ssh root@YOUR_PROXMOX_IP 'qm set <VM_ID> --delete ide0'
-ssh root@YOUR_PROXMOX_IP 'qm set <VM_ID> --boot order=scsi0'
-ssh root@YOUR_PROXMOX_IP 'qm template <VM_ID>'
-```
+2. **Automatic Template Conversion**:
+   - Script monitors VM status and waits for shutdown
+   - Removes installation ISO and converts VM to template
+   - Sets proper boot order and template naming
+   - Creates template info file with metadata
 
-**Note**: The script will output the exact VM ID and commands to run. Check the script output for the specific commands.
+**Note**: The entire process is fully automated via systemd services - no manual console access required.
 
 ### Script Locations and Where to Run
 
