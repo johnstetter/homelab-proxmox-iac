@@ -17,6 +17,7 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 ```
 .
 ├── README.md                  # This file
+├── build/                     # Generated build artifacts
 ├── docs/                      # Documentation
 │   ├── CLAUDE.md              # Claude Code integration guide
 │   ├── DISK-RESIZE-GUIDE.md   # Proxmox disk resize procedures
@@ -26,6 +27,7 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 │   ├── PROXMOX-API-SETUP.md   # Proxmox API token configuration
 │   ├── PROXMOX-CLI-TROUBLESHOOTING.md # Proxmox CLI debugging
 │   ├── README-phase2.md       # Phase 2 NixOS implementation guide
+│   ├── README-phase3.md       # Phase 3 Kubernetes implementation guide
 │   ├── README-prompt.md       # AI prompt engineering guide
 │   ├── README-roadmap.md      # Multi-phase development roadmap
 │   ├── S3-DYNAMODB-SETUP.md   # AWS backend configuration guide
@@ -33,7 +35,8 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 │   └── TODO.md                # Prioritized task list
 ├── journal/                   # Development journal
 │   ├── README.md              # Journal overview and methodology
-│   └── phase-1-retrospective.md # Phase 1 AI-assisted development experience
+│   ├── phase-1-retrospective.md # Phase 1 AI-assisted development experience
+│   └── phase-2-completion.md  # Phase 2 completion summary
 ├── terraform/
 │   ├── main.tf                # Entry point for Terraform root module
 │   ├── providers.tf
@@ -44,25 +47,35 @@ This project provisions repeatable, multi-cluster Kubernetes environments using 
 │   ├── environments/          # Environment-specific configurations
 │   │   ├── dev.tfvars.example    # Development environment template
 │   │   └── prod.tfvars.example   # Production environment template
+│   ├── inventory/             # Generated Ansible inventory files (gitignored)
+│   ├── kubeconfig/            # Generated kubeconfig files (gitignored)
 │   ├── modules/
 │   │   └── proxmox_vm/        # Reusable VM provisioning module
+│   ├── ssh_keys/              # SSH key pairs for VM access (gitignored)
 │   └── templates/             # Template files for generated configs
 ├── nixos/                     # NixOS configurations
+│   ├── base-template.nix      # Base template configuration
+│   ├── nixos-template-configuration.nix # Template-specific configuration
 │   ├── common/
 │   │   └── configuration.nix  # Shared NixOS configuration
 │   ├── dev/
 │   │   ├── control.nix       # Dev control plane config
 │   │   └── worker.nix        # Dev worker config
-│   └── prod/
-│       ├── control.nix       # Prod control plane config
-│       └── worker.nix        # Prod worker config
+│   ├── prod/
+│   │   ├── control.nix       # Prod control plane config
+│   │   └── worker.nix        # Prod worker config
+│   └── roles/
+│       ├── control-plane.nix  # Control plane role configuration
+│       └── worker.nix         # Worker role configuration
 ├── scripts/                   # Automation scripts
-│   ├── create-proxmox-templates.sh  # Create Proxmox VM templates
-│   ├── generate-nixos-iso.sh        # Generate NixOS ISO images
-│   ├── populate-nixos-configs.sh    # Populate NixOS configurations
-│   ├── setup-gitlab-aws-iam.sh      # Setup GitLab CI AWS credentials
-│   └── validate-phase2.sh           # Validate Phase 2 implementation
-├── gitlab-ci.yml              # GitLab CI/CD pipeline
+│   ├── build-and-deploy-template.sh # Build and deploy NixOS template
+│   ├── create-proxmox-template.sh   # Create Proxmox VM template
+│   ├── create-s3-state-bucket.sh   # Create S3 bucket for Terraform state
+│   ├── generate-nixos-iso.sh       # Generate NixOS ISO images
+│   ├── populate-nixos-configs.sh   # Populate NixOS configurations
+│   ├── setup-gitlab-aws-iam.sh     # Setup GitLab CI AWS credentials
+│   └── validate-phase2.sh          # Validate Phase 2 implementation
+├── .gitlab-ci.yml             # GitLab CI/CD pipeline
 └── .gitignore
 ```
 
@@ -112,6 +125,7 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 
 ### Implementation Guides
 - **[docs/README-phase2.md](./docs/README-phase2.md)** - Phase 2 NixOS implementation guide
+- **[docs/README-phase3.md](./docs/README-phase3.md)** - Phase 3 Kubernetes implementation guide
 - **[docs/README-roadmap.md](./docs/README-roadmap.md)** - Complete multi-phase development roadmap
 - **[docs/TESTING-PLAN.md](./docs/TESTING-PLAN.md)** - Comprehensive testing strategy
 
@@ -126,6 +140,7 @@ Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS f
 - **[terraform/README.md](./terraform/README.md)** - Terraform module documentation
 - **[journal/README.md](./journal/README.md)** - Development journal overview and methodology
 - **[journal/phase-1-retrospective.md](./journal/phase-1-retrospective.md)** - Phase 1 AI-assisted development experience
+- **[journal/phase-2-completion.md](./journal/phase-2-completion.md)** - Phase 2 completion summary and achievements
 
 ### Legacy Documentation
 - **[docs/NIXOS-TEMPLATE-INSTALLATION.md](./docs/NIXOS-TEMPLATE-INSTALLATION.md)** - Legacy NixOS template guide (superseded by NIXOS-TEMPLATE-SETUP.md)
@@ -144,10 +159,12 @@ For development commands and architecture overview, see [docs/CLAUDE.md](./docs/
 - ✅ Comprehensive documentation and setup guides
 - ✅ GitLab CI/CD pipeline with AWS authentication and security best practices
 
-**Phase 2** - NixOS Node Configuration ⏳
-- ⏳ NixOS ISO generation with nixos-generators
-- ⏳ Kubernetes component pre-configuration
-- ⏳ Proxmox template automation
+**Phase 2** - NixOS Node Configuration ✅
+- ✅ NixOS ISO generation with nixos-generators
+- ✅ Kubernetes component pre-configuration
+- ✅ Proxmox template automation
+- ✅ Role-based configuration system (control-plane/worker)
+- ✅ Base template with NFS client support
 
 **Phase 3** - Kubernetes Installation 📋
 - 📋 Cluster initialization with kubeadm
