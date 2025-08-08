@@ -141,7 +141,7 @@ check_prerequisites() {
     # Check if base template ISO exists
     if [[ ! -f "$ISO_DIR/$ISO_NAME" ]]; then
         log_error "Base template ISO not found: $ISO_DIR/$ISO_NAME"
-        log_error "Run nixos-generate -f iso -c ./nixos/automated-template.nix -o $ISO_DIR/$ISO_NAME first"
+        log_error "Run nixos-generate -f iso -c ./nixos/base-template.nix -o $ISO_DIR/$ISO_NAME first"
         exit 1
     fi
 
@@ -355,9 +355,95 @@ create_template() {
     return 0
 }
 
+# Create VM and wait for auto-installation to complete
+create_and_install_vm() {
+    local iso_name="$1"
+    local vm_id="$2"
+    
+    log_info "Creating VM $vm_id for auto-installation..."
+    
+    # Create VM with auto-installation ISO
+    local create_cmd="qm create $vm_id \\
+        --name '$TEMPLATE_NAME-installer' \\
+        --memory 4096 \\
+        --cores 2 \\
+        --net0 virtio,bridge=vmbr0 \\
+        --scsi0 $DISK_STORAGE:32 \\
+        --ide2 $ISO_STORAGE:iso/$iso_name,media=cdrom \\
+        --boot order=ide2 \\
+        --ostype l26 \\
+        --agent enabled=1"
+    
+    if ! execute_proxmox_cmd "$create_cmd" "Creating VM $vm_id"; then
+        return 1
+    fi
+    
+    log_info "Starting VM $vm_id for auto-installation..."
+    if ! execute_proxmox_cmd "qm start $vm_id" "Starting VM $vm_id"; then
+        return 1
+    fi
+    
+    # Monitor VM until it shuts down (installation complete)
+    log_info "Monitoring VM $vm_id installation progress..."
+    local max_wait=1800  # 30 minutes max
+    local wait_interval=30
+    local elapsed=0
+    
+    while [[ $elapsed -lt $max_wait ]]; do
+        local status
+        status=$(ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm status $vm_id" | awk '{print $2}' 2>/dev/null || echo "unknown")
+        
+        case "$status" in
+            "stopped")
+                log_success "VM $vm_id has stopped - installation complete!"
+                return 0
+                ;;
+            "running")
+                log_info "Installation in progress... (${elapsed}s elapsed)"
+                ;;
+            *)
+                log_warning "VM $vm_id status: $status (${elapsed}s elapsed)"
+                ;;
+        esac
+        
+        sleep $wait_interval
+        elapsed=$((elapsed + wait_interval))
+    done
+    
+    log_error "Installation timeout after ${max_wait}s - VM may have failed"
+    return 1
+}
+
+# Convert installed VM to template
+convert_vm_to_template() {
+    local vm_id="$1"
+    
+    log_info "Converting VM $vm_id to template..."
+    
+    # Remove ISO from VM
+    if ! execute_proxmox_cmd "qm set $vm_id --ide2 none" "Removing installation ISO"; then
+        log_warning "Failed to remove ISO, continuing..."
+    fi
+    
+    # Convert to template
+    if execute_proxmox_cmd "qm template $vm_id" "Converting VM $vm_id to template"; then
+        # Rename template
+        if execute_proxmox_cmd "qm set $vm_id --name '$TEMPLATE_NAME'" "Renaming template to $TEMPLATE_NAME"; then
+            log_success "Template conversion complete!"
+            return 0
+        else
+            log_warning "Template created but rename failed"
+            return 0
+        fi
+    else
+        log_error "Failed to convert VM to template"
+        return 1
+    fi
+}
+
 # Create single base template
 create_base_template() {
-    log_info "Creating base NixOS template..."
+    log_info "Creating base NixOS template with auto-installation..."
 
     # Find available template ID
     local template_id
@@ -365,8 +451,20 @@ create_base_template() {
         return 1
     fi
 
-    # Create the template
-    if create_template "$ISO_DIR/$ISO_NAME" "$template_id"; then
+    # Upload ISO first
+    if ! upload_iso "$ISO_DIR/$ISO_NAME"; then
+        log_error "Failed to upload ISO"
+        return 1
+    fi
+
+    # Create VM and run auto-installation
+    if ! create_and_install_vm "$ISO_NAME" "$template_id"; then
+        log_error "Auto-installation failed"
+        return 1
+    fi
+    
+    # Convert to template
+    if convert_vm_to_template "$template_id"; then
         # Create template info file
         {
             echo "{"

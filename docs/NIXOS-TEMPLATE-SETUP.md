@@ -236,7 +236,7 @@ ssh-add -l
 **ISO generation fails:**
 ```bash
 # Check if NixOS configuration exists
-ls -la nixos/automated-template.nix
+ls -la nixos/base-template.nix
 
 # Check Nix experimental features
 cat ~/.config/nix/nix.conf

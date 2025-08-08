@@ -208,7 +208,7 @@ nix --version
 nixos-generate --help
 
 # Verify configuration exists
-ls -la nixos/automated-template.nix
+ls -la nixos/base-template.nix
 ```
 
 **Template Creation Fails:**

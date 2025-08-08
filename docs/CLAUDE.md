@@ -125,7 +125,7 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 - `terraform/terraform.tfvars.example`: Example configuration with all options
 
 ### NixOS Integration
-- Single base template: `nixos/automated-template.nix`
+- Single base template: `nixos/base-template.nix`
 - Post-provisioning configuration via cloud-init
 - Role-specific setup handled by future nixos-generators integration
 
