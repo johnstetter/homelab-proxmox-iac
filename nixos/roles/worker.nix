@@ -111,6 +111,7 @@
   environment.systemPackages = with pkgs; [
     cni-plugins
     flannel
+    nfs-utils
     # Additional tools for troubleshooting
     tcpdump
     iftop
@@ -237,6 +238,16 @@
     plugins."io.containerd.snapshotter.v1.overlayfs" = {
       root_path = "/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs";
     };
+  };
+
+  # NFS client configuration
+  services.rpcbind.enable = true;
+
+  # NFS mount for Synology cluster storage
+  fileSystems."/mnt/nfs" = {
+    device = "192.168.1.4:/volume1/k8s-cluster-storage";
+    fsType = "nfs";
+    options = [ "nfsvers=4" "rsize=1048576" "wsize=1048576" "hard" "intr" ];
   };
 
   # Monitoring and log rotation

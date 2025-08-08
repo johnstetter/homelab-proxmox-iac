@@ -66,7 +66,7 @@ EXAMPLES:
 
 REQUIREMENTS:
     - Nix package manager must be installed
-    - NixOS configuration must exist at $NIXOS_DIR/automated-template.nix
+    - NixOS configuration must exist at $NIXOS_DIR/base-template.nix
 
 EOF
 }
@@ -120,8 +120,8 @@ check_prerequisites() {
     fi
 
     # Check if NixOS configuration exists
-    if [[ ! -f "$NIXOS_DIR/automated-template.nix" ]]; then
-        log_error "NixOS configuration not found: $NIXOS_DIR/automated-template.nix"
+    if [[ ! -f "$NIXOS_DIR/base-template.nix" ]]; then
+        log_error "NixOS configuration not found: $NIXOS_DIR/base-template.nix"
         log_error "This file should contain the base template configuration with automated installation"
         exit 1
     fi
@@ -153,10 +153,26 @@ generate_base_iso() {
     local iso_path="$OUTPUT_DIR/$ISO_NAME"
     
     log_info "Generating base template ISO: $ISO_NAME"
+    
+    # Remove existing ISO if it exists (overwrite approach)
+    if [[ -f "$iso_path" ]]; then
+        log_info "Removing existing ISO: $ISO_NAME"
+        rm -f "$iso_path"
+    fi
 
-    # Generate ISO using nixos-generators
-    log_info "Running nixos-generate with automated-template.nix..."
-    if nixos-generate -f iso -c "$NIXOS_DIR/automated-template.nix" -o "$iso_path" 2>&1 | tee -a "$LOG_DIR/iso-generation.log"; then
+    # Get current commit SHA
+    local commit_sha
+    if command -v git &> /dev/null && git rev-parse --git-dir &> /dev/null; then
+        commit_sha=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+        log_info "Building ISO from commit: $commit_sha"
+    else
+        commit_sha="unknown"
+        log_warning "Not in a git repository, commit SHA will be 'unknown'"
+    fi
+    
+    # Generate ISO using nixos-generators with commit info
+    log_info "Running nixos-generate with base-template.nix..."
+    if NIX_BUILD_COMMIT_SHA="$commit_sha" nixos-generate -f iso -c "$NIXOS_DIR/base-template.nix" -o "$iso_path" 2>&1 | tee -a "$LOG_DIR/iso-generation.log"; then
         # nixos-generate creates a symlink to the actual ISO, resolve it
         if [[ -L "$iso_path" ]]; then
             local real_iso_dir
@@ -216,9 +232,9 @@ main() {
         log_success "Base template ISO generated successfully!"
         log_info "ISO is available at: $OUTPUT_DIR/$ISO_NAME"
         log_info "Next steps:"
-        log_info "  1. Run ./scripts/create-proxmox-templates.sh --proxmox-host <host>"
-        log_info "  2. Complete manual NixOS installation on VM 9000"
-        log_info "  3. Convert VM to template when installation is complete"
+        log_info "  1. Run ./scripts/create-proxmox-template.sh --proxmox-host <host>"
+        log_info "     (Or use ./scripts/build-and-deploy-template.sh for complete automation)"
+        log_info "  2. The VM will auto-install and convert to template automatically"
     else
         log_error "ISO generation failed!"
         exit 1

@@ -1,85 +1,76 @@
-# README-roadmap.md
+# NixOS Kubernetes Infrastructure - Implementation Status
 
-## 🛠️ Deployment Roadmap
+## 🎯 Current Status: **COMPLETED AUTOMATED DEPLOYMENT**
 
-This roadmap outlines the full plan for building a multi-cluster Kubernetes environment using Terraform and NixOS on Proxmox.
-
----
-
-### **Phase 1: Terraform + Proxmox Automation**
-
-- [ ] Set up Terraform project using Telmate Proxmox provider
-- [ ] Define VM templates for NixOS using cloud-init ISOs
-- [ ] Create reusable modules for VM provisioning
-- [ ] Create clusters:
-  - `dev-cluster` (1 control plane, 2 workers)
-  - `prod-cluster` (3 control planes, 3+ workers)
-- [ ] Configure S3 + DynamoDB backend for remote state
-- [ ] Automate Terraform plan/apply with GitLab CI
+This project successfully implements automated Kubernetes infrastructure provisioning using NixOS templates and Terraform.
 
 ---
 
-### **Phase 2: NixOS Node Configuration**
+## ✅ **Implemented Features**
 
-- [ ] Generate cloud-init NixOS ISOs using `nixos-generators`
-- [ ] Preconfigure NixOS with `kubelet`, `containerd`, sysctl, CNI
-- [ ] Use Flannel or Calico as the default CNI
-- [ ] Write reusable NixOS modules for node roles
+### **Infrastructure Automation**
+- ✅ Terraform project with Telmate Proxmox provider  
+- ✅ Reusable VM modules for provisioning
+- ✅ SSH key generation and management
+- ✅ Ansible inventory generation
+- ✅ Flexible cluster sizing (dev/prod configurations)
 
----
+### **NixOS Template System**
+- ✅ Automated NixOS ISO generation with `nixos-generators`
+- ✅ Self-installing template with systemd auto-install service
+- ✅ LVM partitioning with resize capabilities
+- ✅ Cloud-init integration for post-deployment configuration
+- ✅ NFS client support for shared storage integration
 
-### **Phase 3: Kubernetes Installation**
+### **Storage and Networking**
+- ✅ LVM-based storage with 20GB default (expandable)
+- ✅ NFS mount integration (`/mnt/nfs` from Synology NAS)
+- ✅ Bridge networking with DHCP
+- ✅ SSH access with generated keys
 
-- [ ] Install Kubernetes via Kubespray or kubeadm
-- [ ] Optionally evaluate nix-k3s for Nix-native setup
-- [ ] Ensure multi-node HA support for prod cluster
-
----
-
-### **Phase 4: GitLab CI/CD Integration**
-
-- [ ] Store code in GitLab repo with `.gitlab-ci.yml`
-- [ ] Run terraform plan/apply via CI
-- [ ] Optional: build and store cloud-init ISOs automatically
-- [ ] Optional: deploy GitLab Runner inside homelab
-
----
-
-### **Phase 5: Bonus Enhancements**
-
-- [ ] Use nix flake + `nixos-rebuild switch --flake`
-- [ ] Add `direnv`, `lorri`, or `nix-shell` for local dev
-- [ ] Explore GitOps automation for cluster bootstrapping
+### **Automation Scripts**
+- ✅ `build-and-deploy-template.sh` - Complete pipeline
+- ✅ `generate-nixos-iso.sh` - ISO creation
+- ✅ `create-proxmox-template.sh` - Template deployment
 
 ---
 
-## 📁 Suggested Directory Layout
+## 🚀 **Next Steps (Future Enhancements)**
+
+### **Kubernetes Installation**
+- [ ] Kubernetes cluster initialization (kubeadm)
+- [ ] CNI plugin deployment (Flannel/Calico)
+- [ ] Role-specific node configuration
+
+### **CI/CD Integration**
+- [ ] GitLab CI pipeline for infrastructure updates
+- [ ] Automated template rebuilds
+- [ ] GitOps workflow implementation
+
+### **Advanced Features**
+- [ ] Multi-cluster management
+- [ ] Nix flakes integration
+- [ ] Backup and disaster recovery
+- [ ] Monitoring and observability stack
+
+---
+
+## 🏗️ **Architecture Overview**
 
 ```
-infra/
-├── terraform/
-│   ├── main.tf
-│   ├── providers.tf
-│   ├── versions.tf
-│   ├── backend.tf
-│   ├── terraform.tfvars.example
-│   ├── outputs.tf
-│   └── modules/
-│       └── proxmox_vm/
-│           ├── main.tf
-│           ├── variables.tf
-│           └── outputs.tf
-├── nixos/
-│   ├── common/
-│   │   └── configuration.nix
-│   ├── dev/
-│   │   └── control.nix
-│   │   └── worker.nix
-│   └── prod/
-│       └── control.nix
-│       └── worker.nix
-├── .gitlab-ci.yml
-├── README.md
-├── README-roadmap.md
-└── README-prompt.md
+NixOS Template (base-template.nix)
+├── Automated Installation (systemd service)
+├── LVM Partitioning (/dev/sda -> VG -> LV)
+├── NFS Client (Synology integration) 
+├── Cloud-init Support
+└── SSH Key Access
+
+Terraform Infrastructure
+├── SSH Key Generation
+├── Control Plane VMs (1-3 nodes)
+├── Worker Node VMs (2+ nodes)
+├── Ansible Inventory Generation
+└── Kubeconfig Template
 ```
+
+This infrastructure provides a solid foundation for Kubernetes deployment with automated NixOS template creation and Terraform-based VM provisioning.

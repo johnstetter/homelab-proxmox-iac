@@ -35,11 +35,15 @@ terraform fmt -recursive
 # Source Nix environment (required for ISO generation)
 source ~/.nix-profile/etc/profile.d/nix.sh
 
+# Complete pipeline: Generate ISO and deploy template (RECOMMENDED)
+./scripts/build-and-deploy-template.sh --proxmox-host 192.168.1.5
+
+# OR run steps separately:
 # Generate single base NixOS ISO (takes 10-30 minutes)
 ./scripts/generate-nixos-iso.sh
 
 # Create Proxmox base template
-./scripts/create-proxmox-templates.sh --proxmox-host YOUR_PROXMOX_IP
+./scripts/create-proxmox-template.sh --proxmox-host 192.168.1.5
 
 # Validate Phase 2 implementation
 ./scripts/validate-phase2.sh
@@ -95,9 +99,10 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 - AWS S3/DynamoDB backend for state management and locking
 
 **Phase 2** - NixOS Base Template:
-- Single base NixOS ISO with automated installation
-- LVM partitioning for disk resize capabilities
+- Single base NixOS ISO with automated installation (systemd auto-install enabled)
+- LVM partitioning for disk resize capabilities  
 - Cloud-init ready for post-provisioning configuration
+- Auto-installation via `/etc/nixos-auto-install.sh` on boot
 
 **Phase 3** - Kubernetes Configuration (future):
 - Role-specific configuration via nixos-generators
@@ -125,7 +130,7 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 - `terraform/terraform.tfvars.example`: Example configuration with all options
 
 ### NixOS Integration
-- Single base template: `nixos/automated-template.nix`
+- Single base template: `nixos/base-template.nix`
 - Post-provisioning configuration via cloud-init
 - Role-specific setup handled by future nixos-generators integration
 

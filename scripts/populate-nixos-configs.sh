@@ -506,7 +506,7 @@ main() {
     log_info "Next steps:"
     log_info "  1. Review and customize the generated configurations"
     log_info "  2. Run ./scripts/generate-nixos-isos.sh to create ISOs"
-    log_info "  3. Run ./scripts/create-proxmox-templates.sh to create VM templates"
+    log_info "  3. Run ./scripts/create-proxmox-template.sh to create VM templates"
 }
 
 # Run main function with all arguments

@@ -1,6 +1,9 @@
 # Extract Proxmox host IP from API URL
 locals {
   proxmox_host = regex("https://([^:]+):", var.proxmox_api_url)[0]
+
+  # Combined SSH keys for all VMs (newline separated)
+  combined_ssh_keys = "${tls_private_key.k8s_ssh_key.public_key_openssh}\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZf7VzaIaxgfP3Jf2F2YfruyTmRF9Q2+ulbo/1K3gcP ansible@ansible.slowplanet.net"
 }
 
 # Generate SSH key pair for VM access
@@ -56,7 +59,7 @@ module "k8s_control_plane" {
 
   # SSH Configuration
   ssh_user       = var.ssh_user
-  ssh_public_key = tls_private_key.k8s_ssh_key.public_key_openssh
+  ssh_public_key = local.combined_ssh_keys
 
   # NixOS configuration path (for Phase 2 implementation)
   nixos_config_path = "${path.root}/../nixos/${var.environment}/control.nix"
@@ -91,7 +94,7 @@ module "k8s_worker_nodes" {
 
   # SSH Configuration
   ssh_user       = var.ssh_user
-  ssh_public_key = tls_private_key.k8s_ssh_key.public_key_openssh
+  ssh_public_key = local.combined_ssh_keys
 
   # NixOS configuration path (for Phase 2 implementation)
   nixos_config_path = "${path.root}/../nixos/${var.environment}/worker.nix"
@@ -126,7 +129,7 @@ module "k8s_load_balancer" {
 
   # SSH Configuration
   ssh_user       = var.ssh_user
-  ssh_public_key = tls_private_key.k8s_ssh_key.public_key_openssh
+  ssh_public_key = local.combined_ssh_keys
 
   # Load balancer will use basic NixOS configuration
   # HAProxy configuration will be handled in NixOS config

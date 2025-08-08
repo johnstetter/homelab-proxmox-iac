@@ -85,7 +85,7 @@ variable "vm_template" {
 variable "disk_storage" {
   description = "Storage pool for VM disks"
   type        = string
-  default     = "local-zfs-tank"
+  default     = "local-lvm"
 }
 
 # Control Plane Configuration
