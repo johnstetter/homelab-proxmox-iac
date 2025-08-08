@@ -335,20 +335,15 @@ create_template() {
         fi
     done
 
-    # Manual installation required - leave VM ready for user
-    log_info "VM $vm_id created and ready for NixOS installation"
+    # VM ready for automated installation
+    log_info "VM $vm_id created and configured for automated NixOS installation"
     log_info ""
-    log_info "To complete template creation:"
-    log_info "  1. Boot VM from ISO and run automated installation: /etc/nixos-auto-install.sh"
-    log_info "  2. After installation and shutdown, convert to template:"
-    log_info "     ssh root@$PROXMOX_HOST 'qm set $vm_id --delete ide0'"
-    log_info "     ssh root@$PROXMOX_HOST 'qm set $vm_id --boot order=scsi0'"
-    log_info "     ssh root@$PROXMOX_HOST 'qm template $vm_id'"
-    log_info ""
-    log_info "The automated installation will:"
-    log_info "  - Create LVM partitioning for disk resize capabilities"
-    log_info "  - Install NixOS with GRUB bootloader (BIOS compatible)"
-    log_info "  - Configure cloud-init, SSH, and essential packages"
+    log_info "Automated installation process includes:"
+    log_info "  - systemd service automatically runs /etc/nixos-auto-install.sh on boot"
+    log_info "  - LVM partitioning for disk resize capabilities"
+    log_info "  - NixOS installation with GRUB bootloader (BIOS compatible)"
+    log_info "  - Cloud-init, SSH, and Kubernetes-ready configuration"
+    log_info "  - Automatic shutdown when installation completes"
     log_info ""
     
     # Don't convert to template - leave as VM for manual work
@@ -384,12 +379,12 @@ create_and_install_vm() {
     fi
     
     # Monitor VM until it shuts down (installation complete)
-    log_info "Monitoring VM $vm_id installation progress..."
-    log_warning "MANUAL INSTALLATION REQUIRED:"
-    log_warning "  1. Open Proxmox web UI -> VM $vm_id -> Console"
-    log_warning "  2. Run: sudo /etc/nixos-auto-install.sh"
-    log_warning "  3. Wait for VM to shut down automatically"
-    log_info "Script will continue monitoring and convert to template when VM stops..."
+    log_info "Monitoring VM $vm_id automated installation progress..."
+    log_info "AUTOMATED INSTALLATION IN PROGRESS:"
+    log_info "  - systemd service 'nixos-auto-install' is running automatically"
+    log_info "  - NixOS will be installed with LVM partitioning and GRUB bootloader"
+    log_info "  - VM will shut down automatically when installation completes"
+    log_info "Waiting for automated installation to finish..."
     echo ""
     
     local max_wait=1800  # 30 minutes max
@@ -407,7 +402,7 @@ create_and_install_vm() {
                 return 0
                 ;;
             "running")
-                log_info "Installation in progress... (${elapsed}s elapsed)"
+                log_info "Automated installation in progress... (${elapsed}s elapsed)"
                 ;;
             *)
                 log_warning "VM $vm_id status: $status (${elapsed}s elapsed)"
@@ -418,7 +413,7 @@ create_and_install_vm() {
         elapsed=$((elapsed + wait_interval))
     done
     
-    log_error "Installation timeout after ${max_wait}s - VM may have failed"
+    log_error "Automated installation timeout after ${max_wait}s - VM may have failed"
     return 1
 }
 

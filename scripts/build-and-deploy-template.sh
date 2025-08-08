@@ -69,11 +69,11 @@ EXAMPLES:
     $0 --proxmox-host 192.168.1.5 --template-id 9200 --dry-run
 
 This script will:
-    1. Generate NixOS ISO with current commit SHA embedded
+    1. Generate NixOS ISO with automated installation and commit SHA embedded
     2. Upload ISO to Proxmox
-    3. Create VM and boot it
-    4. Prompt for manual installation (temporary - systemd auto-install disabled)
-    5. Monitor installation progress
+    3. Create VM and boot it with systemd-managed auto-installation
+    4. Monitor automated systemd service progress (no manual intervention needed)
+    5. Wait for VM shutdown signal when automated installation completes
     6. Convert completed VM to template
     7. Clean up temporary files
 
