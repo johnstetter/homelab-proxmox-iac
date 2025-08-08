@@ -98,8 +98,6 @@ nixos-generate-config --root /mnt
       mkdir -p /mnt/etc/nixos/roles
       cp /etc/nixos/roles/*.nix /mnt/etc/nixos/roles/ 2>/dev/null || true
       
-      # Copy role setup script (if it exists)
-      cp /etc/nixos-role-setup.sh /mnt/etc/nixos/ 2>/dev/null || true
       
       # Copy build info to installed system
       cp /etc/nixos-build-info /mnt/etc/nixos-build-info
@@ -250,23 +248,23 @@ nixos-generate-config --root /mnt
     '';
   };
 
-  # Auto-installation service - DISABLED for manual testing
-  # systemd.services.nixos-auto-install = {
-  #   description = "Automated NixOS Installation";
-  #   wantedBy = [ "multi-user.target" ];
-  #   after = [ "systemd-udev-settle.service" ];
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     ExecStart = "/etc/nixos-auto-install.sh";
-  #     StandardOutput = "journal";
-  #     StandardError = "journal";
-  #     RemainAfterExit = true;
-  #   };
-  #   # Only run if we're booted from ISO (not an installed system)
-  #   unitConfig = {
-  #     ConditionPathExists = "!/etc/nixos/hardware-configuration.nix";
-  #   };
-  # };
+  # Auto-installation service - ENABLED for testing
+  systemd.services.nixos-auto-install = {
+    description = "Automated NixOS Installation";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "systemd-udev-settle.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "/etc/nixos-auto-install.sh";
+      StandardOutput = "journal";
+      StandardError = "journal";
+      RemainAfterExit = true;
+    };
+    # Only run if we're booted from ISO (not an installed system)
+    unitConfig = {
+      ConditionPathExists = "!/etc/nixos/hardware-configuration.nix";
+    };
+  };
 
   # Set state version for the ISO  
   system.stateVersion = "24.11";
