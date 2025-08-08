@@ -48,10 +48,10 @@ fi
 
 # Partition disk with LVM (MBR for BIOS boot)
 # Clear any existing partition table first
-dd if=/dev/zero of=/dev/sda bs=1M count=1
+${pkgs.coreutils}/bin/dd if=/dev/zero of=/dev/sda bs=1M count=1
 
 # Create MBR partition table with fdisk
-fdisk /dev/sda << EOF
+${pkgs.util-linux}/bin/fdisk /dev/sda << EOF
 o
 n
 p
@@ -71,41 +71,41 @@ w
 EOF
 
       # Set up LVM
-      pvcreate /dev/sda2
-      vgcreate nixos-vg /dev/sda2
-      lvcreate -L 4G -n swap nixos-vg
-      lvcreate -l 100%FREE -n root nixos-vg
+      ${pkgs.lvm2}/bin/pvcreate /dev/sda2
+      ${pkgs.lvm2}/bin/vgcreate nixos-vg /dev/sda2
+      ${pkgs.lvm2}/bin/lvcreate -L 4G -n swap nixos-vg
+      ${pkgs.lvm2}/bin/lvcreate -l 100%FREE -n root nixos-vg
 
       # Format filesystems
-      mkfs.ext4 -L boot /dev/sda1
-      mkfs.ext4 -L nixos /dev/nixos-vg/root
-      mkswap -L swap /dev/nixos-vg/swap
+      ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L boot /dev/sda1
+      ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L nixos /dev/nixos-vg/root
+      ${pkgs.util-linux}/bin/mkswap -L swap /dev/nixos-vg/swap
 
       # Mount filesystems
-      mount /dev/nixos-vg/root /mnt
-      swapon /dev/nixos-vg/swap
-      mkdir -p /mnt/boot
-      mount /dev/sda1 /mnt/boot
+      ${pkgs.util-linux}/bin/mount /dev/nixos-vg/root /mnt
+      ${pkgs.util-linux}/bin/swapon /dev/nixos-vg/swap
+      ${pkgs.coreutils}/bin/mkdir -p /mnt/boot
+      ${pkgs.util-linux}/bin/mount /dev/sda1 /mnt/boot
 
 # Generate hardware config
-nixos-generate-config --root /mnt
+${pkgs.nixos-install-tools}/bin/nixos-generate-config --root /mnt
 
       # Copy our pre-made configuration
-      cp /etc/nixos/template-configuration.nix /mnt/etc/nixos/configuration.nix
+      ${pkgs.coreutils}/bin/cp /etc/nixos/template-configuration.nix /mnt/etc/nixos/configuration.nix
 
       # Create roles directory and copy role configurations
-      mkdir -p /mnt/etc/nixos/roles
-      cp /etc/nixos/roles/*.nix /mnt/etc/nixos/roles/ 2>/dev/null || true
+      ${pkgs.coreutils}/bin/mkdir -p /mnt/etc/nixos/roles
+      ${pkgs.coreutils}/bin/cp /etc/nixos/roles/*.nix /mnt/etc/nixos/roles/ 2>/dev/null || true
       
       
       # Copy build info to installed system
-      cp /etc/nixos-build-info /mnt/etc/nixos-build-info
+      ${pkgs.coreutils}/bin/cp /etc/nixos-build-info /mnt/etc/nixos-build-info
 
       # Install NixOS
-      nixos-install --no-root-passwd --root /mnt
+      ${pkgs.nixos-install-tools}/bin/nixos-install --no-root-passwd --root /mnt
 
-      echo "Installation complete! Shutting down..."
-      poweroff
+      ${pkgs.coreutils}/bin/echo "Installation complete! Shutting down..."
+      ${pkgs.systemd}/bin/poweroff
     '';
     mode = "0755";
   };
