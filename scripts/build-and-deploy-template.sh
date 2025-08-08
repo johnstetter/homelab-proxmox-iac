@@ -71,10 +71,11 @@ EXAMPLES:
 This script will:
     1. Generate NixOS ISO with current commit SHA embedded
     2. Upload ISO to Proxmox
-    3. Create VM and run auto-installation
-    4. Monitor installation progress
-    5. Convert completed VM to template
-    6. Clean up temporary files
+    3. Create VM and boot it
+    4. Prompt for manual installation (temporary - systemd auto-install disabled)
+    5. Monitor installation progress
+    6. Convert completed VM to template
+    7. Clean up temporary files
 
 EOF
 }

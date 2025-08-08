@@ -385,9 +385,17 @@ create_and_install_vm() {
     
     # Monitor VM until it shuts down (installation complete)
     log_info "Monitoring VM $vm_id installation progress..."
+    log_warning "MANUAL INSTALLATION REQUIRED:"
+    log_warning "  1. Open Proxmox web UI -> VM $vm_id -> Console"
+    log_warning "  2. Run: sudo /etc/nixos-auto-install.sh"
+    log_warning "  3. Wait for VM to shut down automatically"
+    log_info "Script will continue monitoring and convert to template when VM stops..."
+    echo ""
+    
     local max_wait=1800  # 30 minutes max
     local wait_interval=30
     local elapsed=0
+    local prompted=false
     
     while [[ $elapsed -lt $max_wait ]]; do
         local status

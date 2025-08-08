@@ -233,8 +233,8 @@ main() {
         log_info "ISO is available at: $OUTPUT_DIR/$ISO_NAME"
         log_info "Next steps:"
         log_info "  1. Run ./scripts/create-proxmox-template.sh --proxmox-host <host>"
-        log_info "  2. Complete manual NixOS installation on VM 9000"
-        log_info "  3. Convert VM to template when installation is complete"
+        log_info "     (Or use ./scripts/build-and-deploy-template.sh for complete automation)"
+        log_info "  2. The VM will auto-install and convert to template automatically"
     else
         log_error "ISO generation failed!"
         exit 1

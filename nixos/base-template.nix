@@ -33,26 +33,26 @@
   # Create automated installation script
   environment.etc."nixos-auto-install.sh" = {
     text = ''
-      #!/usr/bin/env bash
-      set -euo pipefail
+#!/usr/bin/env bash
+set -euo pipefail
 
-      echo "Starting automated NixOS installation..."
-      
-      # Wait a bit for system to fully initialize
-      sleep 10
-      
-      # Verify we're in a live environment
-      if [[ -f /run/current-system ]]; then
-        echo "Already installed system detected, aborting auto-install"
-        exit 0
-      fi
+echo "Starting automated NixOS installation..."
 
-      # Partition disk with LVM (MBR for BIOS boot)
-      # Clear any existing partition table first
-      dd if=/dev/zero of=/dev/sda bs=1M count=1
-      
-      # Create MBR partition table with fdisk
-      fdisk /dev/sda << EOF
+# Wait a bit for system to fully initialize
+sleep 10
+
+# Verify we're in a live environment
+if [[ -f /run/current-system ]]; then
+  echo "Already installed system detected, aborting auto-install"
+  exit 0
+fi
+
+# Partition disk with LVM (MBR for BIOS boot)
+# Clear any existing partition table first
+dd if=/dev/zero of=/dev/sda bs=1M count=1
+
+# Create MBR partition table with fdisk
+fdisk /dev/sda << EOF
 o
 n
 p
@@ -88,8 +88,8 @@ EOF
       mkdir -p /mnt/boot
       mount /dev/sda1 /mnt/boot
 
-      # Generate hardware config
-      nixos-generate-config --root /mnt
+# Generate hardware config
+nixos-generate-config --root /mnt
 
       # Copy our pre-made configuration
       cp /etc/nixos/template-configuration.nix /mnt/etc/nixos/configuration.nix
@@ -250,24 +250,23 @@ EOF
     '';
   };
 
-  # Auto-installation service that runs on first boot
-  systemd.services.nixos-auto-install = {
-    description = "Automated NixOS Installation";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-udev-settle.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "/etc/nixos-auto-install.sh";
-      StandardOutput = "journal";
-      StandardError = "journal";
-      RemainAfterExit = true;
-    };
-    # Only run if we're booted from ISO (check for live system indicators)
-    unitConfig = {
-      ConditionPathExists = [ "!/run/current-system" "!/etc/NIXOS" ];
-      ConditionKernelCommandLine = "!systemd.unit=graphical.target";
-    };
-  };
+  # Auto-installation service - DISABLED for manual testing
+  # systemd.services.nixos-auto-install = {
+  #   description = "Automated NixOS Installation";
+  #   wantedBy = [ "multi-user.target" ];
+  #   after = [ "systemd-udev-settle.service" ];
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     ExecStart = "/etc/nixos-auto-install.sh";
+  #     StandardOutput = "journal";
+  #     StandardError = "journal";
+  #     RemainAfterExit = true;
+  #   };
+  #   # Only run if we're booted from ISO (not an installed system)
+  #   unitConfig = {
+  #     ConditionPathExists = "!/etc/nixos/hardware-configuration.nix";
+  #   };
+  # };
 
   # Set state version for the ISO  
   system.stateVersion = "24.11";
