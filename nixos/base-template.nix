@@ -191,6 +191,7 @@ nixos-generate-config --root /mnt
           tree
           rsync
           dig
+          nfs-utils
         ];
 
         # Container runtime configuration
@@ -244,7 +245,15 @@ nixos-generate-config --root /mnt
         # Disable swap (required for Kubernetes)
         swapDevices = [ ];
 
-        # TODO: Add role assignment script later
+        # NFS client configuration
+        services.rpcbind.enable = true;
+
+        # NFS mount for Synology cluster storage
+        fileSystems."/mnt/nfs" = {
+          device = "192.168.1.4:/volume1/k8s-cluster-storage";
+          fsType = "nfs";
+          options = [ "nfsvers=4" "rsize=1048576" "wsize=1048576" "hard" "intr" ];
+        };
 
         # Set state version (use 24.11 for current stable)
         system.stateVersion = "24.11";
