@@ -263,7 +263,6 @@ nixos-generate-config --root /mnt
     # Only run if we're booted from ISO (not an installed system)
     unitConfig = {
       ConditionPathExists = "!/etc/nixos/hardware-configuration.nix";
-      ConditionPathExists = "/etc/nixos-auto-install.sh";
     };
   };
 
