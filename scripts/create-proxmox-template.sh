@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# create-proxmox-templates.sh
+# create-proxmox-template.sh
 # Creates a single base NixOS template for Proxmox VMs
 
 set -euo pipefail
@@ -368,7 +368,7 @@ create_and_install_vm() {
         --memory 4096 \\
         --cores 2 \\
         --net0 virtio,bridge=vmbr0 \\
-        --scsi0 $DISK_STORAGE:32 \\
+        --scsi0 $STORAGE_POOL:32 \\
         --ide2 $ISO_STORAGE:iso/$iso_name,media=cdrom \\
         --boot order=ide2 \\
         --ostype l26 \\

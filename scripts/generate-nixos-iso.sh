@@ -232,7 +232,7 @@ main() {
         log_success "Base template ISO generated successfully!"
         log_info "ISO is available at: $OUTPUT_DIR/$ISO_NAME"
         log_info "Next steps:"
-        log_info "  1. Run ./scripts/create-proxmox-templates.sh --proxmox-host <host>"
+        log_info "  1. Run ./scripts/create-proxmox-template.sh --proxmox-host <host>"
         log_info "  2. Complete manual NixOS installation on VM 9000"
         log_info "  3. Convert VM to template when installation is complete"
     else

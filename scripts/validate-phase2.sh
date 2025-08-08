@@ -146,7 +146,7 @@ check_proxmox_templates() {
 
     if [[ ! -f "$BUILD_DIR/templates/base-template-info.json" ]]; then
         log_warning "Proxmox template mapping not found"
-        log_info "Run ./scripts/create-proxmox-templates.sh to create templates"
+        log_info "Run ./scripts/create-proxmox-template.sh to create templates"
         return 1
     fi
 
@@ -309,7 +309,7 @@ generate_report() {
         log_info "Common fixes:"
         log_info "  - Run ./scripts/populate-nixos-configs.sh to create configurations"
         log_info "  - Run ./scripts/generate-nixos-iso.sh to create ISOs"
-        log_info "  - Run ./scripts/create-proxmox-templates.sh to create templates"
+        log_info "  - Run ./scripts/create-proxmox-template.sh to create templates"
         log_info "  - Copy environments/dev.tfvars.example to terraform.tfvars and configure"
     fi
 }
