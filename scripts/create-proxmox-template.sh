@@ -311,9 +311,9 @@ create_template() {
         return 1
     fi
 
-    # Create 50GB disk for installation target (same as VM requirements)  
-    local create_disk_cmd="qm set $vm_id --scsi0 $STORAGE_POOL:50"
-    if ! execute_proxmox_cmd "$create_disk_cmd" "Creating 50GB target disk for VM $vm_id"; then
+    # Create 20GB disk for installation target (same as VM requirements)  
+    local create_disk_cmd="qm set $vm_id --scsi0 $STORAGE_POOL:20"
+    if ! execute_proxmox_cmd "$create_disk_cmd" "Creating 20GB target disk for VM $vm_id"; then
         return 1
     fi
 
@@ -368,7 +368,7 @@ create_and_install_vm() {
         --memory 4096 \\
         --cores 2 \\
         --net0 virtio,bridge=vmbr0 \\
-        --scsi0 $STORAGE_POOL:50 \\
+        --scsi0 $STORAGE_POOL:20 \\
         --ide2 $ISO_STORAGE:iso/$iso_name,media=cdrom \\
         --boot order=ide2 \\
         --ostype l26 \\

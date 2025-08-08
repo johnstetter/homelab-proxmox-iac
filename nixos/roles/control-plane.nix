@@ -145,6 +145,7 @@
     flannel
     kubernetes-helm
     etcd
+    nfs-utils
   ];
 
   # Environment variables for kubectl access
@@ -197,5 +198,15 @@
     "net.core.wmem_max" = 16777216;
     "net.ipv4.tcp_rmem" = "4096 12582912 16777216";
     "net.ipv4.tcp_wmem" = "4096 12582912 16777216";
+  };
+
+  # NFS client configuration
+  services.rpcbind.enable = true;
+
+  # NFS mount for Synology cluster storage
+  fileSystems."/mnt/nfs" = {
+    device = "192.168.1.4:/volume1/k8s-cluster-storage";
+    fsType = "nfs";
+    options = [ "nfsvers=4" "rsize=1048576" "wsize=1048576" "hard" "intr" ];
   };
 }
