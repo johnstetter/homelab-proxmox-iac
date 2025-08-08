@@ -18,6 +18,11 @@
     parted
     gptfdisk
     lvm2
+    util-linux
+    e2fsprogs
+    nixos-install-tools
+    coreutils
+    systemd
   ];
 
   # Create build info file with commit SHA
