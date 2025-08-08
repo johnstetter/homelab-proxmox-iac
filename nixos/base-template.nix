@@ -251,7 +251,8 @@ nixos-generate-config --root /mnt
   systemd.services.nixos-auto-install = {
     description = "Automated NixOS Installation";
     wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-udev-settle.service" ];
+    after = [ "systemd-udev-settle.service" "network-online.target" ];
+    wants = [ "network-online.target" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${pkgs.bash}/bin/bash /etc/nixos-auto-install.sh";
@@ -262,6 +263,7 @@ nixos-generate-config --root /mnt
     # Only run if we're booted from ISO (not an installed system)
     unitConfig = {
       ConditionPathExists = "!/etc/nixos/hardware-configuration.nix";
+      ConditionPathExists = "/etc/nixos-auto-install.sh";
     };
   };
 
