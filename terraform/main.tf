@@ -1,7 +1,7 @@
 # Extract Proxmox host IP from API URL
 locals {
   proxmox_host = regex("https://([^:]+):", var.proxmox_api_url)[0]
-  
+
   # Combined SSH keys for all VMs (newline separated)
   combined_ssh_keys = "${tls_private_key.k8s_ssh_key.public_key_openssh}\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZf7VzaIaxgfP3Jf2F2YfruyTmRF9Q2+ulbo/1K3gcP ansible@ansible.slowplanet.net"
 }
