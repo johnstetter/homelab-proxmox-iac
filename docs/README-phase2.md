@@ -69,25 +69,25 @@ Upload ISO to Proxmox and create the base template:
 # 1. Upload ISO to Proxmox storage
 # 2. Create VM 9100 with 20GB disk
 # 3. Configure for automated installation
-# 4. Leave VM ready for manual completion
+# 4. Monitor automated installation and convert to template
 ```
 
-### Step 3: Complete Template Installation
+### Step 3: Automated Template Installation
 
-Complete the NixOS installation manually:
+The installation process is fully automated:
 
-1. **Start the VM and install NixOS**:
-   - The ISO contains automated installation script
-   - Uses LVM partitioning for resize capabilities
-   - Installs base NixOS with cloud-init support
+1. **Automated Installation Process**:
+   - VM boots and systemd service `nixos-auto-install` runs automatically
+   - Creates LVM partitioning for disk resize capabilities
+   - Installs base NixOS with GRUB bootloader and cloud-init support
+   - VM shuts down automatically when installation completes
 
-2. **Convert to template after installation**:
-   ```bash
-   ssh root@YOUR_PROXMOX_IP 'qm stop 9100'
-   ssh root@YOUR_PROXMOX_IP 'qm set 9100 --delete ide0'
-   ssh root@YOUR_PROXMOX_IP 'qm set 9100 --boot order=scsi0'
-   ssh root@YOUR_PROXMOX_IP 'qm template 9100'
-   ```
+2. **Automatic Template Conversion**:
+   - Script monitors VM status and waits for shutdown
+   - Automatically removes ISO and converts VM to template
+   - Creates template metadata and summary information
+
+**Note**: No manual intervention required - the entire process is handled by systemd automation.
 
 ### Step 4: Update Terraform Configuration
 
