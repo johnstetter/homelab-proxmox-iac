@@ -33,7 +33,6 @@
   # Create automated installation script
   environment.etc."nixos-auto-install.sh" = {
     text = ''
-#!/usr/bin/env bash
 set -euo pipefail
 
 echo "Starting automated NixOS installation..."
@@ -255,7 +254,7 @@ nixos-generate-config --root /mnt
     after = [ "systemd-udev-settle.service" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "/etc/nixos-auto-install.sh";
+      ExecStart = "${pkgs.bash}/bin/bash /etc/nixos-auto-install.sh";
       StandardOutput = "journal";
       StandardError = "journal";
       RemainAfterExit = true;
