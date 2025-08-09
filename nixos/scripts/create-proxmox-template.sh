@@ -243,6 +243,30 @@ cleanup_old_isos() {
     return 0
 }
 
+# Clean up installer VM after template creation
+cleanup_installer_vm() {
+    local vm_id="$1"
+    
+    log_info "Cleaning up installer VM $vm_id..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log_info "[DRY RUN] Would destroy installer VM: $vm_id"
+        return 0
+    fi
+    
+    # Check if VM exists first
+    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm status $vm_id" >/dev/null 2>&1; then
+        # Destroy the installer VM
+        if execute_proxmox_cmd "qm destroy $vm_id" "Destroying installer VM $vm_id"; then
+            log_success "Installer VM $vm_id cleaned up"
+        else
+            log_warning "Failed to clean up installer VM $vm_id - you may need to remove it manually"
+        fi
+    else
+        log_info "Installer VM $vm_id already removed or doesn't exist"
+    fi
+}
+
 # Upload ISO to Proxmox
 upload_iso() {
     local iso_file="$1"
@@ -462,6 +486,9 @@ create_base_template() {
     
     # Convert to template
     if convert_vm_to_template "$template_id"; then
+        # Clean up the installer VM after successful template creation
+        cleanup_installer_vm "$template_id"
+        
         # Create template info file
         {
             echo "{"
@@ -482,6 +509,9 @@ create_base_template() {
         return 0
     else
         log_error "Failed to create base template"
+        # Clean up failed installer VM
+        log_info "Cleaning up failed installer VM..."
+        cleanup_installer_vm "$template_id"
         return 1
     fi
 }
@@ -504,9 +534,9 @@ main() {
         log_success "Base template creation completed!"
         log_info "Template information saved to: $TEMPLATES_DIR/base-template-info.json"
         log_info "Next steps:"
-        log_info "  1. Update terraform/environments/{env}/environments/dev.tfvars to use vm_template = \"$TEMPLATE_NAME\""
+        log_info "  1. Update terraform/projects/{env}/environments/dev.tfvars to use vm_template = \"$TEMPLATE_NAME\""
         log_info "  2. Use nixos-generators for node-specific configurations"
-        log_info "  3. cd terraform/environments/nixos-kubernetes/ && terraform plan/apply to test deployment"
+        log_info "  3. cd terraform/projects/nixos-kubernetes/ && terraform plan/apply to test deployment"
         
         if [[ -f "$TEMPLATES_DIR/base-template-info.json" ]]; then
             log_info "Base template details:"

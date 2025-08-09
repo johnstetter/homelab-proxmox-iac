@@ -13,7 +13,7 @@ set -euo pipefail
 # Configuration
 IAM_USER="gitlab-terraform-ci"
 POLICY_NAME="TerraformS3StateAccess"
-S3_BUCKET="stetter-k8s-infra-terraform-state"
+S3_BUCKET="stetter-homelab-proxmox-iac-tf-state"
 
 # Colors for output
 RED='\033[0;31m'

@@ -1,6 +1,6 @@
 # Terraform Root Module Template
 
-This directory provides a standardized template for creating new Terraform root modules in the k8s-infra project.
+This directory provides a standardized template for creating new Terraform root modules in the homelab-proxmox-iac project.
 
 ## Template Standards
 
@@ -76,10 +76,10 @@ Use consistent S3 backend configuration:
 ```hcl
 terraform {
   backend "s3" {
-    bucket       = "stetter-k8s-infra-terraform-state"
+    bucket       = "stetter-homelab-proxmox-iac-tf-state"
     key          = "project-name/dev/terraform.tfstate"
     region       = "us-east-2"
-    use_lockfile = true
+    dynamodb_table = "homelab-proxmox-iac-tf-locks"
     encrypt      = true
   }
 }
@@ -128,7 +128,7 @@ module "vms" {
 
 3. **Create environment configs**:
    ```bash
-   cd root-modules/new-project/environments/
+   cd terraform/projects/new-project/environments/
    cp dev.tfvars.example dev.tfvars
    # Edit dev.tfvars with actual values
    ```

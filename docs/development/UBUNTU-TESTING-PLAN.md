@@ -138,7 +138,7 @@ terraform workspace select default
 terraform apply -var-file="environments/dev.tfvars"
 
 # Verify state separation (check S3 bucket)
-aws s3 ls s3://stetter-k8s-infra-terraform-state/ubuntu-servers/
+aws s3 ls s3://stetter-homelab-proxmox-iac-tf-state/ubuntu-servers/
 ```
 
 **Validation Steps:**

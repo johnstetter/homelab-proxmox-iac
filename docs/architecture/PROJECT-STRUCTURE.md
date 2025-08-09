@@ -5,7 +5,7 @@ This document explains the improved project structure and path resolution system
 ## 🏗️ Directory Structure
 
 ```
-k8s-infra/
+homelab-proxmox-iac/
 ├── shared/                     # Shared utilities and configuration
 │   ├── lib/                    # Shared libraries
 │   │   └── paths.sh           # Path resolution and utilities
@@ -24,7 +24,7 @@ k8s-infra/
 │       └── templates/         # Ubuntu configuration templates
 ├── terraform/
 │   ├── modules/               # Reusable Terraform modules
-│   └── environments/          # Root modules for different environments
+│   └── projects/              # Independent Terraform projects
 ├── scripts/                   # General infrastructure scripts
 ├── docs/                      # Documentation
 ├── build/                     # Build artifacts (auto-created)
@@ -77,7 +77,7 @@ K8S_INFRA_BUILD_DIR            # Build artifacts directory
 K8S_INFRA_NIXOS_DIR            # NixOS platform directory
 K8S_INFRA_UBUNTU_DIR           # Ubuntu platform directory
 K8S_INFRA_TERRAFORM_DIR        # Terraform directory
-K8S_INFRA_ROOT_MODULES_DIR     # Terraform root modules
+K8S_INFRA_TERRAFORM_PROJECTS_DIR # Terraform projects directory
 
 # Build paths
 K8S_INFRA_ISO_DIR              # ISO build directory

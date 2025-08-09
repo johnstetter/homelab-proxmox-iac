@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository Information
+- **GitLab**: `git@gitlab.com:stetter-homelab/homelab-proxmox-iac.git`
+- **GitHub Mirror**: `git@github.com:johnstetter/homelab-proxmox-iac.git`
+- **GitHub Username**: johnstetter
+
 ## Common Development Commands
 
 ### Terraform Operations
@@ -11,7 +16,7 @@ cd scripts/
 ./create-s3-state-bucket.sh
 
 # Initialize Terraform with S3 backend (choose environment)
-cd terraform/environments/nixos-kubernetes/  # or ubuntu-servers/
+cd terraform/projects/nixos-kubernetes/  # or ubuntu-servers/
 terraform init
 
 # Plan deployment
@@ -53,7 +58,7 @@ source ~/.nix-profile/etc/profile.d/nix.sh
 ```bash
 # Configure Terraform variables (including S3 backend)
 # Choose the environment you want to work with:
-cp terraform/environments/nixos-kubernetes/environments/dev.tfvars.example terraform/environments/nixos-kubernetes/environments/dev.tfvars
+cp terraform/projects/nixos-kubernetes/environments/dev.tfvars.example terraform/projects/nixos-kubernetes/environments/dev.tfvars
 # Edit dev.tfvars with your Proxmox and S3 backend details
 
 # Make scripts executable
@@ -70,7 +75,7 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 
 ### Core Components
 
-**Terraform Environment Modules** (`terraform/environments/`):
+**Terraform Project Modules** (`terraform/projects/`):
 - Environment-specific root modules (nixos-kubernetes, ubuntu-servers, template)
 - Each environment has its own main.tf, variables, and tfvars files
 - Uses the shared `proxmox_vm` module for VM creation
@@ -126,10 +131,10 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 ## Key Files and Patterns
 
 ### Terraform Configuration
-- `terraform/environments/{env}/main.tf`: Environment-specific infrastructure definition
-- `terraform/environments/{env}/variables.tf`: Comprehensive input variables for customization
-- `terraform/environments/{env}/outputs.tf`: Exports for inventory generation and automation
-- `terraform/environments/{env}/environments/{env}.tfvars.example`: Example configuration files
+- `terraform/projects/{env}/main.tf`: Project-specific infrastructure definition
+- `terraform/projects/{env}/variables.tf`: Comprehensive input variables for customization
+- `terraform/projects/{env}/outputs.tf`: Exports for inventory generation and automation
+- `terraform/projects/{env}/environments/{env}.tfvars.example`: Example configuration files
 
 ### NixOS Integration
 - Single base template: `nixos/base-template.nix`
@@ -137,15 +142,15 @@ This project implements a **multi-phase NixOS Kubernetes infrastructure experime
 - Role-specific setup handled by future nixos-generators integration
 
 ### Generated Artifacts
-- SSH keys stored in `terraform/environments/{env}/ssh_keys/`
-- Ansible inventory generated at `terraform/environments/{env}/inventory/hosts.yml`
-- Kubeconfig template at `terraform/environments/{env}/kubeconfig/kubeconfig-template.yml`
+- SSH keys stored in `terraform/projects/{env}/ssh_keys/`
+- Ansible inventory generated at `terraform/projects/{env}/inventory/hosts.yml`
+- Kubeconfig template at `terraform/projects/{env}/kubeconfig/kubeconfig-template.yml`
 - Base template ISO in `build/isos/nixos-base-template.iso`
 - Template info in `build/templates/base-template-info.json`
 
 ## Development Workflow
 
-1. **Configure Environment**: Copy and edit `terraform/environments/{env}/environments/{env}.tfvars`
+1. **Configure Project**: Copy and edit `terraform/projects/{env}/environments/{env}.tfvars`
 2. **Phase 1**: Deploy base infrastructure with `terraform apply`
 3. **Phase 2**: Generate base template ISO and create Proxmox template
 4. **Validation**: Use `./scripts/validate-phase2.sh` for testing

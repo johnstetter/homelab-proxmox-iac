@@ -1,10 +1,10 @@
 # Template Project Guide
 
-This guide explains how to use the standardized Terraform template to create new infrastructure projects in the k8s-infra repository.
+This guide explains how to use the standardized Terraform template to create new infrastructure projects in the homelab-proxmox-iac repository.
 
 ## Overview
 
-The `terraform/environments/template/` directory provides a standardized starting point for creating new Terraform environment modules. It includes all the required files, standards, and patterns used across the project.
+The `terraform/projects/template/` directory provides a standardized starting point for creating new Terraform project modules. It includes all the required files, standards, and patterns used across the project.
 
 ## When to Use the Template
 
@@ -52,10 +52,10 @@ Update `backend.tf` with your project-specific state path:
 ```hcl
 terraform {
   backend "s3" {
-    bucket       = "stetter-k8s-infra-terraform-state"
+    bucket       = "stetter-homelab-proxmox-iac-tf-state"
     key          = "my-project/dev/terraform.tfstate"  # ← Change this
     region       = "us-east-2"
-    use_lockfile = true
+    dynamodb_table = "homelab-proxmox-iac-tf-locks"
     encrypt      = true
   }
 }

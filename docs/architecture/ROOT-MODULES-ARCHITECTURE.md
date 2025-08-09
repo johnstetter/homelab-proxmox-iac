@@ -17,7 +17,7 @@ The root modules architecture organizes Terraform configurations into separate, 
 ## Directory Structure
 
 ```
-root-modules/
+terraform/projects/
 ├── nixos-kubernetes/          # Kubernetes cluster infrastructure
 │   ├── main.tf                # K8s cluster definitions
 │   ├── variables.tf           # K8s-specific variables
@@ -39,7 +39,7 @@ root-modules/
 └── future-project/            # Additional infrastructure types
     └── ...
 
-shared-modules/
+terraform/modules/
 └── proxmox_vm/               # Reusable VM provisioning module
     ├── main.tf               # Core VM logic
     ├── variables.tf          # VM configuration variables
@@ -53,7 +53,7 @@ shared-modules/
 Each root module uses a separate path in the same S3 bucket:
 
 ```
-S3 Bucket: stetter-k8s-infra-terraform-state
+S3 Bucket: stetter-homelab-proxmox-iac-tf-state
 ├── nixos-kubernetes/
 │   ├── dev/terraform.tfstate       # Dev K8s cluster state
 │   └── prod/terraform.tfstate      # Prod K8s cluster state
@@ -71,10 +71,10 @@ Standard backend configuration for all projects:
 ```hcl
 terraform {
   backend "s3" {
-    bucket       = "stetter-k8s-infra-terraform-state"
+    bucket       = "stetter-homelab-proxmox-iac-tf-state"
     key          = "project-name/environment/terraform.tfstate"
     region       = "us-east-2"
-    use_lockfile = true
+    dynamodb_table = "homelab-proxmox-iac-tf-locks"
     encrypt      = true
   }
 }
@@ -84,7 +84,7 @@ terraform {
 
 ### Proxmox VM Module
 
-The `shared-modules/proxmox_vm` module provides common VM provisioning logic:
+The `terraform/modules/proxmox_vm` module provides common VM provisioning logic:
 
 ```hcl
 module "servers" {
@@ -162,7 +162,7 @@ variable "proxmox_debug" { default = false }
 
 1. **Copy Template**:
    ```bash
-   cp -r root-modules/template root-modules/new-project
+   cp -r terraform/projects/template terraform/projects/new-project
    ```
 
 2. **Customize Configuration**:
@@ -173,7 +173,7 @@ variable "proxmox_debug" { default = false }
 
 3. **Deploy**:
    ```bash
-   cd root-modules/new-project
+   cd terraform/projects/new-project
    terraform init
    terraform apply -var-file="environments/dev.tfvars"
    ```
@@ -184,7 +184,7 @@ Each project deploys independently:
 
 ```bash
 # Deploy Kubernetes cluster
-cd root-modules/nixos-kubernetes
+cd terraform/projects/nixos-kubernetes
 terraform apply -var-file="environments/dev.tfvars"
 
 # Deploy Ubuntu servers (completely separate)
@@ -219,22 +219,22 @@ The previous structure had a single `terraform/` directory. Migration steps:
    terraform state pull > backup-state.json
    ```
 
-2. **Move to root modules**:
+2. **Move to projects structure**:
    ```bash
-   mv terraform root-modules/nixos-kubernetes
-   mkdir shared-modules
-   mv root-modules/nixos-kubernetes/modules/* shared-modules/
+   mv terraform/environments terraform/projects
+   mkdir terraform/modules
+   mv terraform/projects/nixos-kubernetes/modules/* terraform/modules/
    ```
 
 3. **Update module sources**:
    ```bash
    # Change from "./modules/proxmox_vm" 
-   # to "../../shared-modules/proxmox_vm"
+   # to "../../modules/proxmox_vm"
    ```
 
 4. **Re-initialize**:
    ```bash
-   cd root-modules/nixos-kubernetes
+   cd terraform/projects/nixos-kubernetes
    terraform init -reconfigure
    ```
 

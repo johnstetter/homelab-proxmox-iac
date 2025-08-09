@@ -14,7 +14,7 @@ find_project_root() {
     # Walk up the directory tree looking for project root indicators
     while [[ "$current_dir" != "/" ]]; do
         # Look for characteristic files that indicate project root
-        if [[ -f "$current_dir/.git/config" ]] && [[ -d "$current_dir/root-modules" ]] && [[ -d "$current_dir/shared" ]]; then
+        if [[ -f "$current_dir/.git/config" ]] && [[ -d "$current_dir/terraform" ]] && [[ -d "$current_dir/shared" ]]; then
             echo "$current_dir"
             return 0
         fi
@@ -41,8 +41,8 @@ init_project_paths() {
     export K8S_INFRA_NIXOS_DIR="${K8S_INFRA_ROOT}/nixos"
     export K8S_INFRA_UBUNTU_DIR="${K8S_INFRA_ROOT}/ubuntu"
     export K8S_INFRA_TERRAFORM_DIR="${K8S_INFRA_ROOT}/terraform"
-    export K8S_INFRA_ROOT_MODULES_DIR="${K8S_INFRA_ROOT}/root-modules"
-    export K8S_INFRA_SHARED_MODULES_DIR="${K8S_INFRA_ROOT}/shared-modules"
+    export K8S_INFRA_TERRAFORM_PROJECTS_DIR="${K8S_INFRA_ROOT}/terraform/projects"
+    export K8S_INFRA_TERRAFORM_MODULES_DIR="${K8S_INFRA_ROOT}/terraform/modules"
     
     # Build and output paths
     export K8S_INFRA_ISO_DIR="${K8S_INFRA_BUILD_DIR}/isos"
@@ -125,7 +125,7 @@ validate_project_paths() {
 
 # Debug function to show all paths
 debug_paths() {
-    echo "=== K8S Infrastructure Paths ==="
+    echo "=== Infrastructure Paths ==="
     echo "Project Root: $K8S_INFRA_ROOT"
     echo "Shared Dir:   $K8S_INFRA_SHARED_DIR"
     echo "Scripts Dir:  $K8S_INFRA_SCRIPTS_DIR"
@@ -133,7 +133,7 @@ debug_paths() {
     echo "NixOS Dir:    $K8S_INFRA_NIXOS_DIR"
     echo "Ubuntu Dir:   $K8S_INFRA_UBUNTU_DIR"
     echo "Terraform:    $K8S_INFRA_TERRAFORM_DIR"
-    echo "Root Modules: $K8S_INFRA_ROOT_MODULES_DIR"
+    echo "Projects:     $K8S_INFRA_TERRAFORM_PROJECTS_DIR"
     echo "================================"
 }
 

@@ -1,6 +1,6 @@
 # GitLab CI/CD Setup Guide
 
-Complete guide for setting up GitLab CI/CD pipelines for the NixOS Kubernetes Infrastructure project.
+Complete guide for setting up GitLab CI/CD pipelines for the Homelab Proxmox Infrastructure-as-Code project.
 
 ## Table of Contents
 
@@ -52,12 +52,12 @@ If you prefer manual setup:
            {
                "Effect": "Allow",
                "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-               "Resource": "arn:aws:s3:::stetter-k8s-infra-terraform-state/*"
+               "Resource": "arn:aws:s3:::stetter-homelab-proxmox-iac-tf-state/*"
            },
            {
                "Effect": "Allow",
                "Action": "s3:ListBucket", 
-               "Resource": "arn:aws:s3:::stetter-k8s-infra-terraform-state"
+               "Resource": "arn:aws:s3:::stetter-homelab-proxmox-iac-tf-state"
            }
        ]
    }'
@@ -119,7 +119,7 @@ stages:
 
 1. **Terraform State Management:**
    - Uses S3 backend configured in `terraform/backend.tf`
-   - State file: `s3://stetter-k8s-infra-terraform-state/k8s-infra/dev/terraform.tfstate`
+   - State file: `s3://stetter-homelab-proxmox-iac-tf-state/nixos-kubernetes/dev/terraform.tfstate`
 
 2. **Plan Artifacts:**
    - Plans saved as artifacts for review

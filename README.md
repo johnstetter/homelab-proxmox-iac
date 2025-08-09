@@ -27,32 +27,33 @@ This project provides a flexible, modular infrastructure-as-code foundation for 
 │   ├── GITLAB-CI-SETUP.md            # GitLab CI/CD configuration
 │   ├── TESTING-PLAN.md               # Comprehensive testing strategy
 │   └── [legacy docs...]              # Phase guides, troubleshooting, etc.
-├── root-modules/              # Independent Terraform root modules
-│   ├── nixos-kubernetes/      # Kubernetes cluster infrastructure
-│   │   ├── main.tf            # K8s cluster definitions
-│   │   ├── variables.tf       # K8s-specific variables
-│   │   ├── environments/      # Environment-specific configs
-│   │   │   ├── dev.tfvars.example
-│   │   │   └── prod.tfvars.example
-│   │   ├── templates/         # Ansible inventory, kubeconfig templates
-│   │   └── [standard files]   # providers.tf, versions.tf, backend.tf, etc.
-│   ├── ubuntu-servers/        # Ubuntu server infrastructure
-│   │   ├── main.tf            # Ubuntu server definitions
-│   │   ├── variables.tf       # Server-specific variables
-│   │   ├── environments/      # Environment-specific configs
-│   │   │   └── dev.tfvars     # Development Ubuntu servers
-│   │   ├── templates/         # Ansible inventory templates
-│   │   └── [standard files]   # Complete Terraform configuration
-│   └── template/              # Template for creating new projects
-│       ├── README.md          # Template usage documentation
-│       ├── main.tf            # Base template structure
-│       └── [standard files]   # All required Terraform files
-├── shared-modules/            # Reusable Terraform modules
-│   └── proxmox_vm/           # Common VM provisioning module
-│       ├── main.tf           # Core VM provisioning logic
-│       ├── variables.tf      # VM configuration variables
-│       ├── outputs.tf        # VM outputs
-│       └── versions.tf       # Provider constraints
+├── terraform/                 # Terraform infrastructure
+│   ├── projects/              # Independent Terraform projects  
+│   │   ├── nixos-kubernetes/  # Kubernetes cluster infrastructure
+│   │   │   ├── main.tf        # K8s cluster definitions
+│   │   │   ├── variables.tf   # K8s-specific variables
+│   │   │   ├── environments/  # Environment-specific configs
+│   │   │   │   ├── dev.tfvars.example
+│   │   │   │   └── prod.tfvars.example
+│   │   │   ├── templates/     # Ansible inventory, kubeconfig templates
+│   │   │   └── [standard files] # providers.tf, versions.tf, backend.tf, etc.
+│   │   ├── ubuntu-servers/    # Ubuntu server infrastructure
+│   │   │   ├── main.tf        # Ubuntu server definitions
+│   │   │   ├── variables.tf   # Server-specific variables
+│   │   │   ├── environments/  # Environment-specific configs
+│   │   │   │   └── dev.tfvars # Development Ubuntu servers
+│   │   │   ├── templates/     # Ansible inventory templates
+│   │   │   └── [standard files] # Complete Terraform configuration
+│   │   └── template/          # Template for creating new projects
+│   │       ├── README.md      # Template usage documentation
+│   │       ├── main.tf        # Base template structure
+│   │       └── [standard files] # All required Terraform files
+│   └── modules/               # Reusable Terraform modules
+│       └── proxmox_vm/        # Common VM provisioning module
+│           ├── main.tf        # Core VM provisioning logic
+│           ├── variables.tf   # VM configuration variables
+│           ├── outputs.tf     # VM outputs
+│           └── versions.tf    # Provider constraints
 ├── ubuntu/                    # Ubuntu-specific tooling
 │   ├── scripts/
 │   │   ├── create-ubuntu-template.sh    # Proxmox template creation
@@ -62,10 +63,8 @@ This project provides a flexible, modular infrastructure-as-code foundation for 
 ├── nixos/                     # NixOS configurations
 │   ├── [existing NixOS files] # Template configs, role definitions
 │   └── ...
-├── scripts/                   # Legacy automation scripts
-│   └── [existing scripts]     # NixOS template creation, etc.
-├── terraform/                 # Legacy terraform directory (deprecated)
-│   └── [to be migrated]       # Will be moved to root-modules/nixos-kubernetes/
+├── scripts/                   # General automation scripts
+│   └── [existing scripts]     # State bucket creation, validation, etc.
 ├── journal/                   # Development journal and retrospectives
 └── .gitlab-ci.yml            # GitLab CI/CD pipeline
 ```
@@ -78,19 +77,19 @@ This project provides a flexible, modular infrastructure-as-code foundation for 
 - **Environments**: 
   - `dev-cluster`: 1 control plane, 2 workers
   - `prod-cluster`: 3 control planes, 3 workers
-- **Location**: `root-modules/nixos-kubernetes/`
+- **Location**: `terraform/projects/nixos-kubernetes/`
 
 ### Ubuntu Servers  
 - **Purpose**: General-purpose server infrastructure
 - **OS**: Ubuntu 25.04 with cloud-init
 - **Use Cases**: Web servers, databases, Ansible-managed workloads
 - **Environments**: Configurable server count and resources
-- **Location**: `root-modules/ubuntu-servers/`
+- **Location**: `terraform/projects/ubuntu-servers/`
 
 ### Custom Projects
 - **Purpose**: Any specialized infrastructure needs
 - **Template**: Standardized project template available
-- **Location**: `root-modules/template/` → copy to new project
+- **Location**: `terraform/projects/template/` → copy to new project
 
 ## ✅ Phase 1 Progress
 
@@ -111,7 +110,7 @@ Choose your infrastructure type and follow the appropriate guide:
 ./ubuntu/scripts/create-ubuntu-template.sh
 
 # 2. Configure environment
-cd root-modules/ubuntu-servers/
+cd terraform/projects/ubuntu-servers/
 cp environments/dev.tfvars.example environments/dev.tfvars
 # Edit dev.tfvars with your settings
 
@@ -129,7 +128,7 @@ terraform apply -var-file="environments/dev.tfvars"
 # See docs/NIXOS-TEMPLATE-SETUP.md
 
 # 2. Configure environment  
-cd root-modules/nixos-kubernetes/
+cd terraform/projects/nixos-kubernetes/
 cp environments/dev.tfvars.example environments/dev.tfvars
 # Edit dev.tfvars with your settings
 
@@ -141,10 +140,10 @@ terraform apply -var-file="environments/dev.tfvars"
 ### Create Custom Project
 ```bash
 # 1. Copy template
-cp -r root-modules/template root-modules/my-project
+cp -r terraform/projects/template terraform/projects/my-project
 
 # 2. Customize for your needs
-cd root-modules/my-project
+cd terraform/projects/my-project
 # Edit main.tf, variables.tf, backend.tf
 
 # 3. Deploy

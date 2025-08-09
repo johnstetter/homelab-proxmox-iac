@@ -162,6 +162,13 @@ nixos-generate-config --root /mnt
           extraGroups = [ "wheel" "docker" ];
         };
         
+        # Ansible user for automation
+        users.users.ansible = {
+          isNormalUser = true;
+          extraGroups = [ "wheel" "docker" ];
+          description = "Ansible automation user";
+        };
+        
         # Enable sudo for wheel group without password
         security.sudo = {
           enable = true;

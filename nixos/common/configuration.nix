@@ -95,6 +95,16 @@
       # SSH keys will be managed by cloud-init
     ];
   };
+  
+  # Ansible user for automation
+  users.users.ansible = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "docker" ];
+    description = "Ansible automation user";
+    openssh.authorizedKeys.keys = [
+      # SSH keys will be managed by cloud-init
+    ];
+  };
 
   # Sudo configuration
   security.sudo.wheelNeedsPassword = false;

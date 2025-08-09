@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$(dirname "$(dirname "$SCRIPT_DIR")")/shared/lib/paths.sh"
 
 # Use shared paths
-UBUNTU_SERVERS_DIR="${K8S_INFRA_ROOT_MODULES_DIR}/ubuntu-servers"
+UBUNTU_SERVERS_DIR="${K8S_INFRA_TERRAFORM_DIR}/projects/ubuntu-servers"
 
 # Colors for output
 RED='\033[0;31m'
