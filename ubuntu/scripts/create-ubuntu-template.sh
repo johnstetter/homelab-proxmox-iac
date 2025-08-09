@@ -9,7 +9,7 @@ PROXMOX_NODE="${PROXMOX_NODE:-pve}"
 TEMPLATE_ID="${TEMPLATE_ID:-9000}"
 TEMPLATE_NAME="${TEMPLATE_NAME:-ubuntu-25.04-cloud-init}"
 VM_NAME="${VM_NAME:-ubuntu-25.04-template}"
-STORAGE="${STORAGE:-local-zfs}"
+STORAGE="${STORAGE:-local-lvm}"
 BRIDGE="${BRIDGE:-vmbr0}"
 UBUNTU_VERSION="${UBUNTU_VERSION:-25.04}"
 
