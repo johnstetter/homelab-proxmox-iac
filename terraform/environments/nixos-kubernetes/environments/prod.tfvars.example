@@ -1,0 +1,72 @@
+# Production Environment Configuration
+# Terraform Backend Configuration
+backend_bucket_name     = "k8s-infra-terraform-state"
+backend_key            = "k8s-infra/prod/terraform.tfstate"
+backend_region         = "us-east-1"
+backend_dynamodb_table = "k8s-infra-terraform-locks"
+backend_encrypt        = true
+
+# Proxmox Provider Configuration
+proxmox_api_url          = "https://your-proxmox-server:8006/api2/json"
+proxmox_username         = "terraform@pve"
+proxmox_password         = "your-password-here"
+proxmox_api_token_id     = ""  # Leave empty to use username/password
+proxmox_api_token_secret = ""  # Leave empty to use username/password
+proxmox_tls_insecure     = true
+proxmox_parallel         = 4  # Higher parallelism for prod
+proxmox_timeout          = 600  # Longer timeout for prod
+proxmox_debug            = false
+
+# Cluster Configuration
+cluster_name = "k8s-prod"
+environment  = "prod"
+
+# Proxmox Infrastructure
+proxmox_node = "pve"
+vm_template  = "nixos-base-template"  # Single base NixOS template for all node types
+disk_storage = "local-lvm"
+
+# Control Plane Configuration - HA for prod
+control_plane_count      = 3
+control_plane_cores      = 4  # More CPU for prod
+control_plane_memory     = 8192  # 8GB for prod
+control_plane_disk_size  = "100G"  # Larger disk for prod
+control_plane_ip_base    = "192.168.2.10"  # Different subnet for prod
+
+# Worker Node Configuration - Production specs
+worker_node_count      = 3
+worker_node_cores      = 8  # More CPU for prod workloads
+worker_node_memory     = 16384  # 16GB for prod
+worker_node_disk_size  = "200G"  # Larger disk for prod
+worker_node_ip_base    = "192.168.2.20"
+
+# Load Balancer Configuration - Enabled for prod HA
+enable_load_balancer      = true
+load_balancer_cores       = 2
+load_balancer_memory      = 4096
+load_balancer_disk_size   = "50G"
+load_balancer_ip          = "192.168.2.100"
+
+# Network Configuration - Production subnet
+network_bridge  = "vmbr0"
+network_vlan    = null
+network_cidr    = "24"
+network_gateway = "192.168.2.1"  # Different gateway for prod subnet
+nameserver      = "8.8.8.8"
+
+# SSH Configuration
+ssh_user = "nixos"  # Default user for NixOS
+
+# Kubernetes Configuration
+kubernetes_api_port = 6443
+kubernetes_version  = "1.28.0"
+pod_subnet         = "10.244.0.0/16"
+service_subnet     = "10.96.0.0/12"
+
+# Production Environment IP allocation:
+# Control Plane: 192.168.2.101, 192.168.2.102, 192.168.2.103 (HA)
+# Worker nodes: 192.168.2.201, 192.168.2.202, 192.168.2.203
+# Load Balancer: 192.168.2.100 (for HA control plane)
+#
+# Note: Ensure your network infrastructure supports the 192.168.2.x subnet
+# or adjust the IP ranges according to your network configuration

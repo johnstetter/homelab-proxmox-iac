@@ -11,12 +11,15 @@ SKIP_TERRAFORM="${SKIP_TERRAFORM:-false}"
 TERRAFORM_ACTION="${TERRAFORM_ACTION:-apply}"  # apply, plan, destroy
 PROXMOX_HOST="${PROXMOX_HOST:-core}"
 PROXMOX_USER="${PROXMOX_USER:-root}"
-PROXMOX_NODE="${PROXMOX_NODE:-pve}"
+PROXMOX_NODE="${PROXMOX_NODE:-core}"
 
-# Script paths
+# Load shared path resolution and configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-UBUNTU_SERVERS_DIR="${PROJECT_ROOT}/root-modules/ubuntu-servers"
+# shellcheck source=../../shared/lib/paths.sh
+source "$(dirname "$(dirname "$SCRIPT_DIR")")/shared/lib/paths.sh"
+
+# Use shared paths
+UBUNTU_SERVERS_DIR="${K8S_INFRA_ROOT_MODULES_DIR}/ubuntu-servers"
 
 # Colors for output
 RED='\033[0;31m'

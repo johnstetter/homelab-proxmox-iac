@@ -1,0 +1,40 @@
+# Ubuntu Servers - Development Environment
+
+# Environment
+environment = "dev"
+
+# Proxmox Provider Configuration
+proxmox_api_url          = "https://your-proxmox-host:8006/api2/json"
+proxmox_username         = "terraform@pve"
+proxmox_password         = ""
+proxmox_api_token_id     = ""  # Leave empty to use username/password
+proxmox_api_token_secret = ""  # Leave empty to use username/password
+proxmox_tls_insecure     = true
+proxmox_parallel         = 2
+proxmox_timeout          = 300
+proxmox_debug            = false
+
+# Proxmox Infrastructure
+proxmox_node = "core"
+vm_template  = "ubuntu-25.04-template"
+disk_storage = "local-lvm"
+
+# Server Configuration
+server_count       = 2
+server_name_prefix = "ubuntu-dev"
+
+# Resource Allocation
+server_cores     = 2
+server_memory    = 2048  # 2GB
+server_disk_size = "20G"
+
+# Network Configuration
+network_bridge  = "vmbr0"
+network_vlan    = null  # No VLAN tagging
+server_ip_base  = "192.168.1.5"  # Results in .51, .52, etc.
+network_cidr    = "24"
+network_gateway = "192.168.1.1"
+nameserver      = "8.8.8.8"
+
+# SSH Configuration
+ssh_user = "ubuntu"

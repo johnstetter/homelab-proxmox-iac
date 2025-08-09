@@ -22,10 +22,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Paths
+# Load shared path resolution and configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-UBUNTU_SERVERS_DIR="${PROJECT_ROOT}/root-modules/ubuntu-servers"
+# shellcheck source=../../shared/lib/paths.sh
+source "$(dirname "$(dirname "$SCRIPT_DIR")")/shared/lib/paths.sh"
+
+# Use shared paths
+UBUNTU_SERVERS_DIR="${K8S_INFRA_ROOT_MODULES_DIR}/ubuntu-servers"
 
 # Test results
 TESTS_PASSED=0
@@ -97,7 +100,7 @@ test_template_creation() {
         warning "Test template ${TEST_TEMPLATE_ID} already exists, skipping creation"
     else
         run_test "Ubuntu template creation" \
-            "TEMPLATE_ID=${TEST_TEMPLATE_ID} TEMPLATE_NAME=${TEST_TEMPLATE_NAME} PROXMOX_HOST=${PROXMOX_HOST} PROXMOX_USER=${PROXMOX_USER} PROXMOX_NODE=${PROXMOX_NODE} ${SCRIPT_DIR}/create-ubuntu-template.sh"
+            "TEMPLATE_ID=${TEST_TEMPLATE_ID} TEMPLATE_NAME=${TEST_TEMPLATE_NAME} PROXMOX_HOST=${PROXMOX_HOST} PROXMOX_USER=${PROXMOX_USER} PROXMOX_NODE=${PROXMOX_NODE} $(find_script "create-ubuntu-template.sh")"
     fi
     
     # Validate template

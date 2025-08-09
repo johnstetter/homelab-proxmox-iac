@@ -4,24 +4,20 @@
 
 set -euo pipefail
 
-# Configuration variables
-PROXMOX_HOST="${PROXMOX_HOST:-core}"
-PROXMOX_USER="${PROXMOX_USER:-root}"
-PROXMOX_NODE="${PROXMOX_NODE:-pve}"
+# Load shared path resolution and configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../shared/lib/paths.sh
+source "$(dirname "$(dirname "$SCRIPT_DIR")")/shared/lib/paths.sh"
+
+# Configuration variables (with shared config defaults)
 TEMPLATE_ID="${TEMPLATE_ID:-9000}"
-TEMPLATE_NAME="${TEMPLATE_NAME:-ubuntu-25.04-cloud-init}"
+TEMPLATE_NAME="${TEMPLATE_NAME:-${UBUNTU_TEMPLATE_NAME}}"
 VM_NAME="${VM_NAME:-ubuntu-25.04-template}"
-STORAGE="${STORAGE:-local-lvm}"
-BRIDGE="${BRIDGE:-vmbr0}"
 UBUNTU_VERSION="${UBUNTU_VERSION:-25.04}"
 
 # Ubuntu Cloud Image URL (25.04 Plucky Puffin)
 UBUNTU_IMAGE_URL="https://cloud-images.ubuntu.com/plucky/current/plucky-server-cloudimg-amd64.img"
 UBUNTU_IMAGE_FILE="ubuntu-${UBUNTU_VERSION}-cloudimg-amd64.img"
-
-# Script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 # Execute Proxmox command via SSH
 execute_proxmox_cmd() {
@@ -106,7 +102,7 @@ execute_proxmox_cmd "qm set ${TEMPLATE_ID} --cipassword \$(openssl passwd -6 ubu
 execute_proxmox_cmd "qm set ${TEMPLATE_ID} --ipconfig0 ip=dhcp" "Setting cloud-init network"
 
 # Add cloud-init configuration if it exists
-CLOUD_INIT_CONFIG="${PROJECT_ROOT}/ubuntu/cloud-init/ubuntu-cloud-init.yml"
+CLOUD_INIT_CONFIG="${K8S_INFRA_UBUNTU_DIR}/cloud-init/ubuntu-cloud-init.yml"
 if [[ -f "${CLOUD_INIT_CONFIG}" ]]; then
     echo "📋 Found cloud-init configuration, copying to Proxmox..."
     # Copy cloud-init config to Proxmox snippets directory

@@ -1,0 +1,62 @@
+# Network Configuration for K8S Infrastructure Project
+# Centralized network settings used across all platforms
+
+network:
+  # Base network configuration
+  gateway: "192.168.1.1"
+  cidr: "24"
+  bridge: "vmbr0"
+  vlan: null
+  nameservers:
+    primary: "192.168.1.4"
+    secondary: "8.8.8.8"
+  
+  # IP address ranges for different components
+  ip_ranges:
+    # NixOS Kubernetes cluster
+    nixos_control_plane:
+      base: "192.168.1.7"
+      count: 3
+      # Results in: 192.168.1.70, 192.168.1.71, 192.168.1.72
+    
+    nixos_workers:
+      base: "192.168.1.8"
+      count: 5
+      # Results in: 192.168.1.80, 192.168.1.81, 192.168.1.82, 192.168.1.83, 192.168.1.84
+    
+    # Ubuntu general purpose servers
+    ubuntu_servers:
+      base: "192.168.1.5"
+      count: 10
+      # Results in: 192.168.1.50, 192.168.1.51, 192.168.1.52...
+    
+    # Load balancers
+    load_balancers:
+      base: "192.168.1.100"
+      count: 2
+      # Results in: 192.168.1.100, 192.168.1.101
+    
+    # Template testing
+    template_testing:
+      base: "192.168.1.200"
+      count: 5
+      # Results in: 192.168.1.200, 192.168.1.201...
+
+# Environment-specific overrides
+environments:
+  dev:
+    # Development uses smaller IP ranges and fewer resources
+    ip_ranges:
+      nixos_control_plane:
+        base: "192.168.1.7"
+        count: 1
+      nixos_workers:
+        base: "192.168.1.8" 
+        count: 2
+      ubuntu_servers:
+        base: "192.168.1.5"
+        count: 3
+  
+  prod:
+    # Production uses full IP ranges
+    # Uses defaults from main network config

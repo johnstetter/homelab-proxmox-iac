@@ -1,0 +1,39 @@
+# Template Project - Development Environment
+# Copy this file to dev.tfvars and customize for your project
+
+# Environment
+environment = "dev"
+
+# Proxmox Provider Configuration
+proxmox_api_url          = "https://192.168.1.100:8006/api2/json"
+proxmox_username         = "terraform@pve"
+proxmox_password         = "your-password-here"
+proxmox_api_token_id     = ""  # Leave empty to use username/password
+proxmox_api_token_secret = ""  # Leave empty to use username/password
+proxmox_tls_insecure     = true
+proxmox_parallel         = 2
+proxmox_timeout          = 300
+proxmox_debug            = false
+
+# Proxmox Infrastructure
+proxmox_node = "pve"
+vm_template  = "your-template-name"
+disk_storage = "local-zfs"
+
+# Network Configuration
+network_bridge  = "vmbr0"
+network_vlan    = null  # No VLAN tagging
+network_cidr    = "24"
+network_gateway = "192.168.1.1"
+nameserver      = "8.8.8.8"
+
+# SSH Configuration
+ssh_user = "ubuntu"
+
+# Project-specific variables go here
+# vm_count = 2
+# vm_name_prefix = "project-dev"
+# vm_cores = 2
+# vm_memory = 2048
+# vm_disk_size = "20G"
+# vm_ip_base = "192.168.1.10"
