@@ -254,16 +254,23 @@ cleanup_installer_vm() {
         return 0
     fi
     
-    # Check if VM exists first
-    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm status $vm_id" >/dev/null 2>&1; then
-        # Destroy the installer VM
-        if execute_proxmox_cmd "qm destroy $vm_id" "Destroying installer VM $vm_id"; then
-            log_success "Installer VM $vm_id cleaned up"
+    # Check if VM exists and is not a template
+    local vm_config
+    if vm_config=$(ssh "$PROXMOX_USER@$PROXMOX_HOST" "qm config $vm_id" 2>/dev/null); then
+        # Check if it's a template (templates have template: 1 in config)
+        if echo "$vm_config" | grep -q "^template:"; then
+            log_info "VM $vm_id is already a template, not cleaning up"
+            return 0
         else
-            log_warning "Failed to clean up installer VM $vm_id - you may need to remove it manually"
+            # It's a regular VM, safe to destroy
+            if execute_proxmox_cmd "qm destroy $vm_id" "Destroying installer VM $vm_id"; then
+                log_success "Installer VM $vm_id cleaned up"
+            else
+                log_warning "Failed to clean up installer VM $vm_id - you may need to remove it manually"
+            fi
         fi
     else
-        log_info "Installer VM $vm_id already removed or doesn't exist"
+        log_info "VM $vm_id doesn't exist or already removed"
     fi
 }
 
@@ -486,9 +493,6 @@ create_base_template() {
     
     # Convert to template
     if convert_vm_to_template "$template_id"; then
-        # Clean up the installer VM after successful template creation
-        cleanup_installer_vm "$template_id"
-        
         # Create template info file
         {
             echo "{"
