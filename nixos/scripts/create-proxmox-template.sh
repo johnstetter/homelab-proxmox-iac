@@ -504,9 +504,9 @@ main() {
         log_success "Base template creation completed!"
         log_info "Template information saved to: $TEMPLATES_DIR/base-template-info.json"
         log_info "Next steps:"
-        log_info "  1. Update terraform.tfvars to use vm_template = \"$TEMPLATE_NAME\""
+        log_info "  1. Update terraform/environments/{env}/environments/dev.tfvars to use vm_template = \"$TEMPLATE_NAME\""
         log_info "  2. Use nixos-generators for node-specific configurations"
-        log_info "  3. Run terraform plan/apply to test deployment"
+        log_info "  3. cd terraform/environments/nixos-kubernetes/ && terraform plan/apply to test deployment"
         
         if [[ -f "$TEMPLATES_DIR/base-template-info.json" ]]; then
             log_info "Base template details:"

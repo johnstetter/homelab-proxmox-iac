@@ -223,7 +223,14 @@ main() {
     log_success "Complete pipeline finished successfully!"
     log_info "Template is ready for use with Terraform"
     log_info "Next steps:"
-    log_info "  cd terraform/"
+    log_info "  # For NixOS Kubernetes cluster:"
+    log_info "  cd terraform/environments/nixos-kubernetes/"
+    log_info "  terraform init"
+    log_info "  terraform apply -var-file=\"environments/dev.tfvars\""
+    log_info ""
+    log_info "  # For Ubuntu servers:"
+    log_info "  cd terraform/environments/ubuntu-servers/"
+    log_info "  terraform init"
     log_info "  terraform apply -var-file=\"environments/dev.tfvars\""
 }
 

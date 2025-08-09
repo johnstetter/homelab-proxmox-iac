@@ -235,7 +235,7 @@ main() {
         log_success "Base template ISO generated successfully!"
         log_info "ISO is available at: $OUTPUT_DIR/$ISO_NAME"
         log_info "Next steps:"
-        log_info "  1. Run ./scripts/create-proxmox-template.sh --proxmox-host <host>"
+        log_info "  1. Run ./nixos/scripts/create-proxmox-template.sh --proxmox-host <host>"
         log_info "     (Or use ./nixos/scripts/build-and-deploy-nixos-template.sh for complete automation)"
         log_info "  2. The VM will auto-install and convert to template automatically"
     else
