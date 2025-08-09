@@ -1,0 +1,80 @@
+# Storage Configuration for K8S Infrastructure Project
+# Centralized storage settings used across all platforms
+
+storage:
+  # Default storage pools
+  default:
+    vm_storage: "local-lvm"
+    iso_storage: "local"
+    snippets_storage: "local"
+    backup_storage: "local"
+  
+  # Proxmox storage pools available
+  pools:
+    local-lvm:
+      type: "lvm"
+      description: "Local LVM storage for VM disks"
+      content: ["images", "rootdir"]
+      shared: false
+      
+    local-zfs:
+      type: "zfs"
+      description: "Local ZFS storage for VM disks (if available)"
+      content: ["images", "rootdir"]
+      shared: false
+      
+    local:
+      type: "dir"
+      description: "Local directory storage for ISOs, templates, snippets"
+      content: ["iso", "vztmpl", "snippets", "backup"]
+      path: "/var/lib/vz"
+      shared: false
+
+# Template storage requirements
+templates:
+  # Disk sizes for different template types
+  disk_sizes:
+    nixos_base: "20G"
+    ubuntu_base: "20G"
+    kubernetes_node: "30G"
+    general_server: "20G"
+  
+  # Memory allocations for templates
+  memory_sizes:
+    nixos_base: 2048
+    ubuntu_base: 2048
+    kubernetes_control: 4096
+    kubernetes_worker: 4096
+    general_server: 2048
+
+# Environment-specific storage overrides
+environments:
+  dev:
+    # Development uses smaller disk sizes
+    templates:
+      disk_sizes:
+        nixos_base: "20G"
+        ubuntu_base: "20G"
+        kubernetes_node: "20G"
+        general_server: "15G"
+      memory_sizes:
+        nixos_base: 2048
+        ubuntu_base: 2048
+        kubernetes_control: 2048
+        kubernetes_worker: 2048
+        general_server: 1024
+  
+  prod:
+    # Production uses larger disk sizes
+    templates:
+      disk_sizes:
+        nixos_base: "30G"
+        ubuntu_base: "30G"
+        kubernetes_node: "50G"
+        general_server: "30G"
+      memory_sizes:
+        nixos_base: 4096
+        ubuntu_base: 4096
+        kubernetes_control: 8192
+        kubernetes_worker: 8192
+        general_server: 4096

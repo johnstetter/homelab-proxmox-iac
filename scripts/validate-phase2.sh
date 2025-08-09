@@ -5,19 +5,18 @@
 
 set -euo pipefail
 
-# Script configuration
+# Load shared path resolution and configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-TERRAFORM_DIR="$PROJECT_ROOT/terraform"
-NIXOS_DIR="$PROJECT_ROOT/nixos"
-BUILD_DIR="$PROJECT_ROOT/build"
+# shellcheck source=../shared/lib/paths.sh
+source "$(dirname "$SCRIPT_DIR")/shared/lib/paths.sh"
+
+# Use shared paths
+TERRAFORM_DIR="$K8S_INFRA_TERRAFORM_DIR"
+NIXOS_DIR="$K8S_INFRA_NIXOS_DIR"
+BUILD_DIR="$K8S_INFRA_BUILD_DIR"
 
 # Default values
 TERRAFORM_DIR_OVERRIDE=""
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color

@@ -1,0 +1,37 @@
+# YAML Lint Configuration
+extends: default
+
+rules:
+  # Line length for readability in infrastructure files
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  
+  # Comments are important in infrastructure
+  comments:
+    min-spaces-from-content: 1
+  
+  # Allow empty values (common in cloud-init, etc.)
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+  
+  # Indentation for Terraform and Ansible
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+  
+  # Truthy values common in infrastructure
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    check-keys: false
+
+# File patterns to ignore
+ignore: |
+  .devcontainer/
+  .terraform/
+  .git/
+  build/
+  *.json

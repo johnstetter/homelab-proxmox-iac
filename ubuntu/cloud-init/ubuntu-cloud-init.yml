@@ -1,0 +1,157 @@
+#cloud-config
+# Ubuntu 25.04 Cloud-Init Configuration for DevOps/Ansible Ready Servers
+# Minimal setup with Python, SSH, and essential DevOps tools
+
+# Basic system configuration
+hostname: ubuntu-server
+fqdn: ubuntu-server.local
+
+# Package updates and upgrades
+package_update: true
+package_upgrade: true
+
+# Essential packages for DevOps/Ansible usage
+packages:
+  # Python ecosystem for Ansible
+  - python3
+  - python3-pip
+  - python3-venv
+  - python3-setuptools
+  
+  # SSH and security
+  - openssh-server
+  - ufw
+  
+  # Essential system tools
+  - curl
+  - wget
+  - git
+  - htop
+  - vim
+  - nano
+  - tree
+  - unzip
+  - jq
+  
+  # Network tools
+  - net-tools
+  - iputils-ping
+  - dnsutils
+  
+  # Development tools
+  - build-essential
+  
+  # Container tools (commonly needed)
+  - ca-certificates
+  - gnupg
+  - lsb-release
+
+# Users configuration
+users:
+  - name: ubuntu
+    groups: [adm, audio, cdrom, dialout, dip, floppy, lxd, netdev, plugdev, sudo, video]
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    ssh_authorized_keys: []  # Will be populated by Terraform
+  
+  - name: ansible
+    groups: [sudo]
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    system: false
+    ssh_authorized_keys:
+      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZf7VzaIaxgfP3Jf2F2YfruyTmRF9Q2+ulbo/1K3gcP ansible@ansible.slowplanet.net'
+
+# SSH configuration
+ssh_pwauth: false  # Disable password authentication
+disable_root: true
+
+# Security - Basic firewall setup
+runcmd:
+  # Configure UFW firewall
+  - ufw --force enable
+  - ufw default deny incoming
+  - ufw default allow outgoing  
+  - ufw allow ssh
+  
+  # Ensure SSH service is enabled and running
+  - systemctl enable ssh
+  - systemctl start ssh
+  
+  # Update Python pip to latest version
+  - python3 -m pip install --upgrade pip
+  
+  # Install common Python packages for automation
+  - python3 -m pip install requests pyyaml jinja2
+  
+  # Set proper timezone (can be overridden via variables)
+  - timedatectl set-timezone UTC
+  
+  # Clean up package cache
+  - apt-get autoremove -y
+  - apt-get autoclean
+
+# Mount configuration (for additional storage if needed)
+mounts:
+  - [ /dev/sr0, /mnt/cdrom, auto, "ro,user,noauto", "0", "0" ]
+
+# Network configuration (will be overridden by Terraform/Proxmox)
+network:
+  config: disabled  # Let Proxmox handle network configuration
+
+# Cloud-init modules to run
+cloud_init_modules:
+  - migrator
+  - seed_random
+  - bootcmd
+  - write-files
+  - growpart
+  - resizefs
+  - disk_setup
+  - mounts
+  - set_hostname
+  - update_hostname
+  - update_etc_hosts
+  - ca-certs
+  - rsyslog
+  - users-groups
+  - ssh
+
+cloud_config_modules:
+  - package-update-upgrade-install
+  - write-files
+  - set_passwords
+  - ntp
+  - timezone
+  - disable-ec2-metadata
+  - runcmd
+
+cloud_final_modules:
+  - package-update-upgrade-install
+  - scripts-vendor
+  - scripts-per-once
+  - scripts-per-boot
+  - scripts-per-instance
+  - scripts-user
+  - ssh-authkey-fingerprints
+  - keys-to-console
+  - phone-home
+  - final-message
+  - power-state-change
+
+# Final message indicating setup completion
+final_message: |
+  Cloud-init setup completed successfully!
+  Ubuntu DevOps server is ready for Ansible management.
+  SSH: ssh ubuntu@$public_ipv4 or ssh ansible@$public_ipv4
+  
+  Users created:
+  - ubuntu: Administrative user with sudo access
+  - ansible: Dedicated user for Ansible automation with passwordless sudo
+  
+  Installed packages:
+  - Python 3 with pip (ready for Ansible)
+  - Essential DevOps tools (git, curl, jq, etc.)
+  - Basic security configuration (UFW firewall)
+  
+  System is ready for configuration management.

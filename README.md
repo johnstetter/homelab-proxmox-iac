@@ -1,127 +1,172 @@
-# Homelab Kubernetes Infrastructure
+# Homelab Infrastructure-as-Code
 
-This project provisions repeatable, multi-cluster Kubernetes environments using Terraform and NixOS on Proxmox.
+This project provides a flexible, modular infrastructure-as-code foundation for homelab environments using Terraform, Proxmox, and multiple OS templates. It supports both Kubernetes clusters (NixOS) and general-purpose servers (Ubuntu).
 
 ## 🧩 Project Goals
 
-- Provision dev and prod Kubernetes clusters automatically via Terraform
-- Use NixOS for minimal, declarative OS configuration
-- Maintain a reusable infrastructure-as-code foundation
-- Focus on local CLI usage for initial development and testing
-- Apply DRY principles and use reusable modules
-- Future phases will add NixOS cloud-init, Kubernetes installation, and GitOps
-- GitLab CI/CD automation as a stretch goal
+- **Multi-platform Infrastructure**: Support both NixOS Kubernetes clusters and Ubuntu servers
+- **Modular Architecture**: Root modules pattern for separate, independent deployments
+- **Code Reuse**: Shared Terraform modules across all infrastructure types
+- **State Isolation**: Independent Terraform state files for each infrastructure type
+- **Environment Management**: Consistent dev/staging/prod patterns across all projects
+- **Automation**: End-to-end scripts for template creation and deployment
+- **Standards**: Consistent patterns and conventions across all infrastructure
 
 ## 📁 Directory Structure
 
 ```
 .
 ├── README.md                  # This file
-├── build/                     # Generated build artifacts
 ├── docs/                      # Documentation
-│   ├── CLAUDE.md              # Claude Code integration guide
-│   ├── DISK-RESIZE-GUIDE.md   # Proxmox disk resize procedures
-│   ├── GITLAB-CI-SETUP.md     # GitLab CI/CD configuration guide
-│   ├── NIXOS-TEMPLATE-INSTALLATION.md # Legacy NixOS template guide
-│   ├── NIXOS-TEMPLATE-SETUP.md # NixOS template creation guide
-│   ├── PROXMOX-API-SETUP.md   # Proxmox API token configuration
-│   ├── PROXMOX-CLI-TROUBLESHOOTING.md # Proxmox CLI debugging
-│   ├── README-phase2.md       # Phase 2 NixOS implementation guide
-│   ├── README-phase3.md       # Phase 3 Kubernetes implementation guide
-│   ├── README-prompt.md       # AI prompt engineering guide
-│   ├── README-roadmap.md      # Multi-phase development roadmap
-│   ├── S3-DYNAMODB-SETUP.md   # AWS backend configuration guide
-│   ├── TESTING-PLAN.md        # Comprehensive testing strategy
-│   └── TODO.md                # Prioritized task list
-├── journal/                   # Development journal
-│   ├── README.md              # Journal overview and methodology
-│   ├── phase-1-retrospective.md # Phase 1 AI-assisted development experience
-│   └── phase-2-completion.md  # Phase 2 completion summary
-├── terraform/
-│   ├── main.tf                # Entry point for Terraform root module
-│   ├── providers.tf
-│   ├── versions.tf
-│   ├── backend.tf             # Remote state backend config
-│   ├── variables.tf           # Variable definitions
-│   ├── outputs.tf
-│   ├── environments/          # Environment-specific configurations
-│   │   ├── dev.tfvars.example    # Development environment template
-│   │   └── prod.tfvars.example   # Production environment template
-│   ├── inventory/             # Generated Ansible inventory files (gitignored)
-│   ├── kubeconfig/            # Generated kubeconfig files (gitignored)
-│   ├── modules/
-│   │   └── proxmox_vm/        # Reusable VM provisioning module
-│   ├── ssh_keys/              # SSH key pairs for VM access (gitignored)
-│   └── templates/             # Template files for generated configs
+│   ├── ROOT-MODULES-ARCHITECTURE.md  # Root modules architecture guide
+│   ├── UBUNTU-TEMPLATE-SETUP.md      # Ubuntu server setup guide
+│   ├── TEMPLATE-PROJECT-GUIDE.md     # Creating new projects guide
+│   ├── PROXMOX-API-SETUP.md          # Proxmox API token configuration
+│   ├── S3-DYNAMODB-SETUP.md          # AWS backend configuration
+│   ├── NIXOS-TEMPLATE-SETUP.md       # NixOS template creation guide
+│   ├── GITLAB-CI-SETUP.md            # GitLab CI/CD configuration
+│   ├── TESTING-PLAN.md               # Comprehensive testing strategy
+│   └── [legacy docs...]              # Phase guides, troubleshooting, etc.
+├── terraform/                 # Terraform infrastructure
+│   ├── projects/              # Independent Terraform projects  
+│   │   ├── nixos-kubernetes/  # Kubernetes cluster infrastructure
+│   │   │   ├── main.tf        # K8s cluster definitions
+│   │   │   ├── variables.tf   # K8s-specific variables
+│   │   │   ├── environments/  # Environment-specific configs
+│   │   │   │   ├── dev.tfvars.example
+│   │   │   │   └── prod.tfvars.example
+│   │   │   ├── templates/     # Ansible inventory, kubeconfig templates
+│   │   │   └── [standard files] # providers.tf, versions.tf, backend.tf, etc.
+│   │   ├── ubuntu-servers/    # Ubuntu server infrastructure
+│   │   │   ├── main.tf        # Ubuntu server definitions
+│   │   │   ├── variables.tf   # Server-specific variables
+│   │   │   ├── environments/  # Environment-specific configs
+│   │   │   │   └── dev.tfvars # Development Ubuntu servers
+│   │   │   ├── templates/     # Ansible inventory templates
+│   │   │   └── [standard files] # Complete Terraform configuration
+│   │   └── template/          # Template for creating new projects
+│   │       ├── README.md      # Template usage documentation
+│   │       ├── main.tf        # Base template structure
+│   │       └── [standard files] # All required Terraform files
+│   └── modules/               # Reusable Terraform modules
+│       └── proxmox_vm/        # Common VM provisioning module
+│           ├── main.tf        # Core VM provisioning logic
+│           ├── variables.tf   # VM configuration variables
+│           ├── outputs.tf     # VM outputs
+│           └── versions.tf    # Provider constraints
+├── ubuntu/                    # Ubuntu-specific tooling
+│   ├── scripts/
+│   │   ├── create-ubuntu-template.sh    # Proxmox template creation
+│   │   └── build-and-deploy-ubuntu.sh   # End-to-end deployment
+│   └── cloud-init/
+│       └── ubuntu-cloud-init.yml        # Ubuntu cloud-init config
 ├── nixos/                     # NixOS configurations
-│   ├── base-template.nix      # Base template configuration
-│   ├── nixos-template-configuration.nix # Template-specific configuration
-│   ├── common/
-│   │   └── configuration.nix  # Shared NixOS configuration
-│   ├── dev/
-│   │   ├── control.nix       # Dev control plane config
-│   │   └── worker.nix        # Dev worker config
-│   ├── prod/
-│   │   ├── control.nix       # Prod control plane config
-│   │   └── worker.nix        # Prod worker config
-│   └── roles/
-│       ├── control-plane.nix  # Control plane role configuration
-│       └── worker.nix         # Worker role configuration
-├── scripts/                   # Automation scripts
-│   ├── build-and-deploy-template.sh # Build and deploy NixOS template
-│   ├── create-proxmox-template.sh   # Create Proxmox VM template
-│   ├── create-s3-state-bucket.sh   # Create S3 bucket for Terraform state
-│   ├── generate-nixos-iso.sh       # Generate NixOS ISO images
-│   ├── populate-nixos-configs.sh   # Populate NixOS configurations
-│   ├── setup-gitlab-aws-iam.sh     # Setup GitLab CI AWS credentials
-│   └── validate-phase2.sh          # Validate Phase 2 implementation
-├── .gitlab-ci.yml             # GitLab CI/CD pipeline
-└── .gitignore
+│   ├── [existing NixOS files] # Template configs, role definitions
+│   └── ...
+├── scripts/                   # General automation scripts
+│   └── [existing scripts]     # State bucket creation, validation, etc.
+├── journal/                   # Development journal and retrospectives
+└── .gitlab-ci.yml            # GitLab CI/CD pipeline
 ```
 
-## 🚀 Clusters
+## 🚀 Infrastructure Types
 
-- `dev-cluster`: 1 control plane, 2 workers
-- `prod-cluster`: 3 control planes, 3 workers
+### NixOS Kubernetes Clusters
+- **Purpose**: Production-ready Kubernetes clusters
+- **OS**: NixOS with declarative configuration
+- **Environments**: 
+  - `dev-cluster`: 1 control plane, 2 workers
+  - `prod-cluster`: 3 control planes, 3 workers
+- **Location**: `terraform/projects/nixos-kubernetes/`
+
+### Ubuntu Servers  
+- **Purpose**: General-purpose server infrastructure
+- **OS**: Ubuntu 25.04 with cloud-init
+- **Use Cases**: Web servers, databases, Ansible-managed workloads
+- **Environments**: Configurable server count and resources
+- **Location**: `terraform/projects/ubuntu-servers/`
+
+### Custom Projects
+- **Purpose**: Any specialized infrastructure needs
+- **Template**: Standardized project template available
+- **Location**: `terraform/projects/template/` → copy to new project
 
 ## ✅ Phase 1 Progress
 
 Phase 1 is focused on automating VM creation using Terraform, Proxmox, and AWS for state management.
 
-## 🚀 Quick Start (Local CLI)
+## 🚀 Quick Start
 
-1. **Set up AWS backend**: Follow [docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)
-2. **Set up Proxmox API access**: Follow [docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md) to create API tokens with proper permissions
-3. **Create NixOS VM template**: Follow [docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md) to create the required `nixos-2311-cloud-init` template
-4. **Set up GitLab CI/CD** (optional): Follow [docs/GITLAB-CI-SETUP.md](./docs/GITLAB-CI-SETUP.md) to configure automated pipelines
-4. **Configure Terraform variables**: 
-   - Use environment-specific configuration files in `terraform/environments/`
-   - Copy `terraform/environments/dev.tfvars.example` to `terraform/environments/dev.tfvars` and customize for development
-   - Copy `terraform/environments/prod.tfvars.example` to `terraform/environments/prod.tfvars` and customize for production
-   - Update with your actual Proxmox API credentials and S3 backend details
-5. **Deploy infrastructure locally**: 
-   ```bash
-   cd terraform/
-   
-   # For development environment
-   terraform init
-   terraform plan -var-file="environments/dev.tfvars"
-   terraform apply -var-file="environments/dev.tfvars"
-   
-   # For production environment
-   terraform plan -var-file="environments/prod.tfvars"
-   terraform apply -var-file="environments/prod.tfvars"
-   ```
-6. **Phase 2 - NixOS**: Follow [docs/README-phase2.md](./docs/README-phase2.md) for NixOS configuration
-7. **Testing**: Use the comprehensive [docs/TESTING-PLAN.md](./docs/TESTING-PLAN.md) to validate your setup
+Choose your infrastructure type and follow the appropriate guide:
+
+### Prerequisites (All Projects)
+1. **AWS Backend**: [docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)
+2. **Proxmox API**: [docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md) 
+3. **GitLab CI/CD** (optional): [docs/GITLAB-CI-SETUP.md](./docs/GITLAB-CI-SETUP.md)
+
+### Deploy Ubuntu Servers
+```bash
+# 1. Create Ubuntu template
+./ubuntu/scripts/create-ubuntu-template.sh
+
+# 2. Configure environment
+cd terraform/projects/ubuntu-servers/
+cp environments/dev.tfvars.example environments/dev.tfvars
+# Edit dev.tfvars with your settings
+
+# 3. Deploy servers
+terraform init
+terraform apply -var-file="environments/dev.tfvars"
+
+# 4. Or use end-to-end automation
+./ubuntu/scripts/build-and-deploy-ubuntu.sh
+```
+
+### Deploy NixOS Kubernetes
+```bash
+# 1. Create NixOS template (follow guide)
+# See docs/NIXOS-TEMPLATE-SETUP.md
+
+# 2. Configure environment  
+cd terraform/projects/nixos-kubernetes/
+cp environments/dev.tfvars.example environments/dev.tfvars
+# Edit dev.tfvars with your settings
+
+# 3. Deploy cluster
+terraform init
+terraform apply -var-file="environments/dev.tfvars"
+```
+
+### Create Custom Project
+```bash
+# 1. Copy template
+cp -r terraform/projects/template terraform/projects/my-project
+
+# 2. Customize for your needs
+cd terraform/projects/my-project
+# Edit main.tf, variables.tf, backend.tf
+
+# 3. Deploy
+terraform init
+terraform apply -var-file="environments/dev.tfvars"
+```
+
+### Architecture Overview
+See [docs/ROOT-MODULES-ARCHITECTURE.md](./docs/ROOT-MODULES-ARCHITECTURE.md) for detailed architecture information.
 
 ## 📚 Documentation
 
-### Setup and Configuration
-- **[docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)** - AWS backend configuration guide
-- **[docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md)** - Proxmox API token setup with required permissions
-- **[docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md)** - Complete guide for creating NixOS VM templates
-- **[docs/GITLAB-CI-SETUP.md](./docs/GITLAB-CI-SETUP.md)** - GitLab CI/CD pipeline configuration and AWS authentication
+### Architecture and Planning
+- **[docs/ROOT-MODULES-ARCHITECTURE.md](./docs/ROOT-MODULES-ARCHITECTURE.md)** - Root modules architecture and design patterns
+- **[docs/TEMPLATE-PROJECT-GUIDE.md](./docs/TEMPLATE-PROJECT-GUIDE.md)** - Creating new infrastructure projects
+- **[docs/README-roadmap.md](./docs/README-roadmap.md)** - Multi-phase development roadmap
+
+### Infrastructure Setup
+- **[docs/UBUNTU-TEMPLATE-SETUP.md](./docs/UBUNTU-TEMPLATE-SETUP.md)** - Ubuntu 25.04 server setup guide
+- **[docs/NIXOS-TEMPLATE-SETUP.md](./docs/NIXOS-TEMPLATE-SETUP.md)** - NixOS template creation guide
+- **[docs/S3-DYNAMODB-SETUP.md](./docs/S3-DYNAMODB-SETUP.md)** - AWS backend configuration
+- **[docs/PROXMOX-API-SETUP.md](./docs/PROXMOX-API-SETUP.md)** - Proxmox API token setup
+- **[docs/GITLAB-CI-SETUP.md](./docs/GITLAB-CI-SETUP.md)** - CI/CD pipeline configuration
 
 ### Implementation Guides
 - **[docs/README-phase2.md](./docs/README-phase2.md)** - Phase 2 NixOS implementation guide
