@@ -9,6 +9,9 @@ ENVIRONMENT="${ENVIRONMENT:-dev}"
 SKIP_TEMPLATE="${SKIP_TEMPLATE:-false}"
 SKIP_TERRAFORM="${SKIP_TERRAFORM:-false}"
 TERRAFORM_ACTION="${TERRAFORM_ACTION:-apply}"  # apply, plan, destroy
+PROXMOX_HOST="${PROXMOX_HOST:-core}"
+PROXMOX_USER="${PROXMOX_USER:-root}"
+PROXMOX_NODE="${PROXMOX_NODE:-pve}"
 
 # Script paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,7 +79,8 @@ create_template() {
         error "Template creation script not found: ${template_script}"
     fi
     
-    if ! "${template_script}"; then
+    # Pass Proxmox configuration to template script
+    if ! PROXMOX_HOST="${PROXMOX_HOST}" PROXMOX_USER="${PROXMOX_USER}" PROXMOX_NODE="${PROXMOX_NODE}" "${template_script}"; then
         error "Template creation failed"
     fi
     

@@ -11,6 +11,9 @@ TEST_TEMPLATE_NAME="${TEST_TEMPLATE_NAME:-ubuntu-25.04-test}"
 SKIP_TEMPLATE="${SKIP_TEMPLATE:-false}"
 SKIP_DEPLOY="${SKIP_DEPLOY:-false}"
 CLEANUP_AFTER="${CLEANUP_AFTER:-false}"
+PROXMOX_HOST="${PROXMOX_HOST:-core}"
+PROXMOX_USER="${PROXMOX_USER:-root}"
+PROXMOX_NODE="${PROXMOX_NODE:-pve}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -64,6 +67,22 @@ run_test() {
     fi
 }
 
+# Execute Proxmox command via SSH
+execute_proxmox_cmd() {
+    local cmd="$1"
+    local description="$2"
+
+    log "$description"
+    
+    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "$cmd"; then
+        success "$description completed"
+        return 0
+    else
+        fail "$description failed"
+        return 1
+    fi
+}
+
 # Test template creation
 test_template_creation() {
     if [[ "${SKIP_TEMPLATE}" == "true" ]]; then
@@ -74,19 +93,19 @@ test_template_creation() {
     log "🔧 Testing Ubuntu Template Creation"
     
     # Check if template already exists
-    if pvesh get /nodes/pve/qemu/${TEST_TEMPLATE_ID}/config &>/dev/null; then
+    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "pvesh get /nodes/${PROXMOX_NODE}/qemu/${TEST_TEMPLATE_ID}/config" &>/dev/null; then
         warning "Test template ${TEST_TEMPLATE_ID} already exists, skipping creation"
     else
         run_test "Ubuntu template creation" \
-            "TEMPLATE_ID=${TEST_TEMPLATE_ID} TEMPLATE_NAME=${TEST_TEMPLATE_NAME} ${SCRIPT_DIR}/create-ubuntu-template.sh"
+            "TEMPLATE_ID=${TEST_TEMPLATE_ID} TEMPLATE_NAME=${TEST_TEMPLATE_NAME} PROXMOX_HOST=${PROXMOX_HOST} PROXMOX_USER=${PROXMOX_USER} PROXMOX_NODE=${PROXMOX_NODE} ${SCRIPT_DIR}/create-ubuntu-template.sh"
     fi
     
     # Validate template
     run_test "Template exists in Proxmox" \
-        "pvesh get /nodes/pve/qemu/${TEST_TEMPLATE_ID}/config >/dev/null"
+        "ssh '$PROXMOX_USER@$PROXMOX_HOST' 'pvesh get /nodes/${PROXMOX_NODE}/qemu/${TEST_TEMPLATE_ID}/config' >/dev/null"
     
     run_test "Template has correct configuration" \
-        "pvesh get /nodes/pve/qemu/${TEST_TEMPLATE_ID}/config | grep -q 'template: 1'"
+        "ssh '$PROXMOX_USER@$PROXMOX_HOST' 'pvesh get /nodes/${PROXMOX_NODE}/qemu/${TEST_TEMPLATE_ID}/config | grep -q \"template: 1\"'"
 }
 
 # Test Terraform configuration
@@ -228,7 +247,7 @@ cleanup_resources() {
     # Remove test template (optional)
     if [[ "${SKIP_TEMPLATE}" != "true" ]]; then
         run_test "Template cleanup" \
-            "qm destroy ${TEST_TEMPLATE_ID} 2>/dev/null || true"
+            "ssh '$PROXMOX_USER@$PROXMOX_HOST' 'qm destroy ${TEST_TEMPLATE_ID} 2>/dev/null || true'"
     fi
     
     # Clean up test files
@@ -337,8 +356,9 @@ main() {
         exit 1
     fi
     
-    if ! command -v pvesh &> /dev/null; then
-        fail "Proxmox pvesh command not available"
+    # Test SSH connectivity to Proxmox
+    if ! ssh -o ConnectTimeout=5 -o BatchMode=yes "$PROXMOX_USER@$PROXMOX_HOST" "echo 'SSH connection test'" &>/dev/null; then
+        fail "Cannot connect to Proxmox server via SSH: $PROXMOX_USER@$PROXMOX_HOST"
         exit 1
     fi
     
