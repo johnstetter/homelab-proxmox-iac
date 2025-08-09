@@ -55,14 +55,14 @@ cloud-init devel schema --config-file ubuntu/cloud-init/ubuntu-cloud-init.yml
 
 ### **Test 1.3: Template Boot Test**
 ```bash
-# Create test VM from template
-qm clone 9001 9999 --name "ubuntu-boot-test"
-qm set 9999 --ciuser ubuntu --cipassword $(openssl passwd -6 testpass)
-qm set 9999 --ipconfig0 ip=dhcp
-qm start 9999
+# Create test VM from template (run on Proxmox host via SSH)
+ssh root@192.168.1.5 "qm clone 9001 9999 --name ubuntu-boot-test"
+ssh root@192.168.1.5 "qm set 9999 --ciuser ubuntu --cipassword \$(openssl passwd -6 testpass)"
+ssh root@192.168.1.5 "qm set 9999 --ipconfig0 ip=dhcp"
+ssh root@192.168.1.5 "qm start 9999"
 
 # Monitor boot process
-qm status 9999
+ssh root@192.168.1.5 "qm status 9999"
 ```
 
 **Validation Steps:**
@@ -331,7 +331,7 @@ ansible all -i inventory/hosts.yml -m ping
 terraform destroy -var-file="environments/test.tfvars" -auto-approve
 
 # Clean up template (optional)
-qm destroy 9001
+ssh root@192.168.1.5 "qm destroy 9001"
 ```
 
 **Validation Steps:**
@@ -396,13 +396,13 @@ ansible all -i inventory/hosts.yml -m shell \
 ### **Template Creation Failures**
 ```bash
 # Check template status
-pvesh get /nodes/pve/qemu/9001/config
+ssh root@192.168.1.5 "pvesh get /nodes/core/qemu/9001/config"
 
 # Check image download
-ls -la /tmp/ubuntu-*
+ssh root@192.168.1.5 "ls -la /tmp/ubuntu-*"
 
 # Verify storage permissions
-pvesh get /nodes/pve/storage
+ssh root@192.168.1.5 "pvesh get /nodes/core/storage"
 ```
 
 ### **Terraform Deployment Issues**
