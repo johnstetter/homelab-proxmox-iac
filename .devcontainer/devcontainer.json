@@ -1,0 +1,156 @@
+{
+  "name": "Infrastructure Development",
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  
+  // Features and extensions
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true,
+      "username": "vscode",
+      "userUid": "automatic",
+      "userGid": "automatic"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": "true",
+      "moby": "true"
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "latest",
+      "minikube": "none"
+    }
+  },
+
+  // VS Code extensions
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Terraform
+        "hashicorp.terraform",
+        "ms-vscode.vscode-json",
+        
+        // Infrastructure as Code
+        "ms-vscode.vscode-yaml",
+        "redhat.ansible",
+        
+        // Shell scripting
+        "timonwong.shellcheck",
+        "foxundermoon.shell-format",
+        "rogalmic.bash-debug",
+        
+        // Security
+        "ms-vscode.vscode-sarif-viewer",
+        "snyk-security.snyk-vulnerability-scanner",
+        
+        // Git and collaboration
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        
+        // Productivity
+        "ms-vscode.vscode-todo-highlight",
+        "streetsidesoftware.code-spell-checker",
+        "esbenp.prettier-vscode",
+        
+        // Documentation
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        
+        // Python (for Ansible and scripting)
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-python.black-formatter",
+        
+        // Docker
+        "ms-azuretools.vscode-docker",
+        
+        // NixOS
+        "bbenoist.nix",
+        "jnoortheen.nix-ide"
+      ],
+      
+      "settings": {
+        "terraform.languageServer.enable": true,
+        "terraform.validation.enable": true,
+        "terraform.format.enable": true,
+        "files.associations": {
+          "*.tf": "terraform",
+          "*.tfvars": "terraform",
+          "*.nix": "nix"
+        },
+        "shellcheck.enable": true,
+        "shellformat.useEditorConfig": true,
+        "[terraform]": {
+          "editor.defaultFormatter": "hashicorp.terraform",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "[yaml]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "[json]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "[markdown]": {
+          "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+          "editor.formatOnSave": true
+        },
+        "[shellscript]": {
+          "editor.defaultFormatter": "foxundermoon.shell-format",
+          "editor.formatOnSave": true
+        },
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black"
+      }
+    }
+  },
+
+  // Port forwards
+  "forwardPorts": [
+    8006,  // Proxmox Web UI
+    8080,  // General web services
+    3000,  // Development servers
+    9090   // Monitoring (Prometheus)
+  ],
+  
+  // Environment variables
+  "containerEnv": {
+    "TF_PLUGIN_CACHE_DIR": "/home/vscode/.terraform.d/plugin-cache",
+    "ANSIBLE_HOST_KEY_CHECKING": "False",
+    "PYTHONPATH": "/workspace",
+    "PATH": "/home/vscode/.local/bin:/home/vscode/.tfenv/bin:/home/vscode/.pyenv/bin:${PATH}"
+  },
+
+  // Mounts and volume setup
+  "mounts": [
+    "source=tf-plugin-cache,target=/home/vscode/.terraform.d/plugin-cache,type=volume",
+    "source=pyenv-cache,target=/home/vscode/.pyenv,type=volume",
+    "source=ssh-keys,target=/home/vscode/.ssh,type=volume"
+  ],
+
+  // Post-creation commands
+  "postCreateCommand": ".devcontainer/setup.sh",
+
+  // Development user
+  "remoteUser": "vscode",
+
+  // Container user
+  "containerUser": "vscode"
+}

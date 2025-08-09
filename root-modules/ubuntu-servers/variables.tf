@@ -72,7 +72,7 @@ variable "proxmox_node" {
 variable "vm_template" {
   description = "VM template name to clone from"
   type        = string
-  default     = "ubuntu-25.04-cloud-init"
+  default     = "ubuntu-25.04-test"
 }
 
 variable "disk_storage" {

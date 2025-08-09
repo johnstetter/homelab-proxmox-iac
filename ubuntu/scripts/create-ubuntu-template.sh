@@ -5,6 +5,8 @@
 set -euo pipefail
 
 # Configuration variables
+PROXMOX_HOST="${PROXMOX_HOST:-core}"
+PROXMOX_USER="${PROXMOX_USER:-root}"
 PROXMOX_NODE="${PROXMOX_NODE:-pve}"
 TEMPLATE_ID="${TEMPLATE_ID:-9000}"
 TEMPLATE_NAME="${TEMPLATE_NAME:-ubuntu-25.04-cloud-init}"
@@ -21,16 +23,33 @@ UBUNTU_IMAGE_FILE="ubuntu-${UBUNTU_VERSION}-cloudimg-amd64.img"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
+# Execute Proxmox command via SSH
+execute_proxmox_cmd() {
+    local cmd="$1"
+    local description="$2"
+
+    echo "🔧 $description"
+    
+    if ssh "$PROXMOX_USER@$PROXMOX_HOST" "$cmd"; then
+        echo "✅ $description completed"
+        return 0
+    else
+        echo "❌ $description failed"
+        return 1
+    fi
+}
+
 echo "🚀 Creating Ubuntu ${UBUNTU_VERSION} template for Proxmox..."
 echo "Template ID: ${TEMPLATE_ID}"
 echo "Template Name: ${TEMPLATE_NAME}"
+echo "Host: ${PROXMOX_HOST}"
 echo "Node: ${PROXMOX_NODE}"
 echo "Storage: ${STORAGE}"
 
 # Check if template already exists
-if pvesh get /nodes/${PROXMOX_NODE}/qemu/${TEMPLATE_ID}/config >/dev/null 2>&1; then
+if ssh "$PROXMOX_USER@$PROXMOX_HOST" "pvesh get /nodes/${PROXMOX_NODE}/qemu/${TEMPLATE_ID}/config" >/dev/null 2>&1; then
     echo "❌ Template ID ${TEMPLATE_ID} already exists!"
-    echo "To recreate, first run: qm destroy ${TEMPLATE_ID}"
+    echo "To recreate, first run: ssh $PROXMOX_USER@$PROXMOX_HOST 'qm destroy ${TEMPLATE_ID}'"
     exit 1
 fi
 
@@ -48,10 +67,18 @@ fi
 
 echo "✅ Ubuntu image downloaded successfully"
 
+# Upload image to Proxmox
+echo "📤 Uploading image to Proxmox..."
+if ! scp "${UBUNTU_IMAGE_FILE}" "$PROXMOX_USER@$PROXMOX_HOST:/tmp/${UBUNTU_IMAGE_FILE}"; then
+    echo "❌ Failed to upload Ubuntu cloud image to Proxmox"
+    exit 1
+fi
+
+echo "✅ Image uploaded to Proxmox successfully"
+
 # Create the VM
-echo "🔧 Creating VM ${TEMPLATE_ID}..."
-qm create ${TEMPLATE_ID} \
-  --name "${VM_NAME}" \
+execute_proxmox_cmd "qm create ${TEMPLATE_ID} \
+  --name '${VM_NAME}' \
   --memory 2048 \
   --cores 2 \
   --net0 virtio,bridge=${BRIDGE} \
@@ -59,46 +86,38 @@ qm create ${TEMPLATE_ID} \
   --vga serial0 \
   --ostype l26 \
   --cpu cputype=host \
-  --scsihw virtio-scsi-pci
+  --scsihw virtio-scsi-pci" "Creating VM ${TEMPLATE_ID}"
 
-echo "💾 Importing disk image..."
-qm importdisk ${TEMPLATE_ID} "${UBUNTU_IMAGE_FILE}" ${STORAGE} --format raw
+execute_proxmox_cmd "qm importdisk ${TEMPLATE_ID} '/tmp/${UBUNTU_IMAGE_FILE}' ${STORAGE} --format raw" "Importing disk image"
 
-echo "🔗 Attaching disk to VM..."
-qm set ${TEMPLATE_ID} --scsi0 ${STORAGE}:vm-${TEMPLATE_ID}-disk-0,cache=writeback,discard=on
+execute_proxmox_cmd "qm set ${TEMPLATE_ID} --scsi0 ${STORAGE}:vm-${TEMPLATE_ID}-disk-0,cache=writeback,discard=on" "Attaching disk to VM"
 
-echo "☁️  Adding cloud-init drive..."
-qm set ${TEMPLATE_ID} --ide2 ${STORAGE}:cloudinit
+execute_proxmox_cmd "qm set ${TEMPLATE_ID} --ide2 ${STORAGE}:cloudinit" "Adding cloud-init drive"
 
-echo "⚙️  Configuring VM settings..."
 # Boot configuration
-qm set ${TEMPLATE_ID} --boot c --bootdisk scsi0
+execute_proxmox_cmd "qm set ${TEMPLATE_ID} --boot c --bootdisk scsi0" "Configuring boot settings"
 
 # Enable QEMU guest agent
-qm set ${TEMPLATE_ID} --agent enabled=1
+execute_proxmox_cmd "qm set ${TEMPLATE_ID} --agent enabled=1" "Enabling QEMU guest agent"
 
 # Set cloud-init settings (will be overridden by Terraform)
-qm set ${TEMPLATE_ID} --ciuser ubuntu
-qm set ${TEMPLATE_ID} --cipassword $(openssl passwd -6 ubuntu)
-qm set ${TEMPLATE_ID} --ipconfig0 ip=dhcp
+execute_proxmox_cmd "qm set ${TEMPLATE_ID} --ciuser ubuntu" "Setting cloud-init user"
+execute_proxmox_cmd "qm set ${TEMPLATE_ID} --cipassword \$(openssl passwd -6 ubuntu)" "Setting cloud-init password"
+execute_proxmox_cmd "qm set ${TEMPLATE_ID} --ipconfig0 ip=dhcp" "Setting cloud-init network"
 
 # Add cloud-init configuration if it exists
 CLOUD_INIT_CONFIG="${PROJECT_ROOT}/ubuntu/cloud-init/ubuntu-cloud-init.yml"
 if [[ -f "${CLOUD_INIT_CONFIG}" ]]; then
     echo "📋 Found cloud-init configuration, copying to Proxmox..."
     # Copy cloud-init config to Proxmox snippets directory
-    SNIPPETS_DIR="/var/lib/vz/snippets"
-    if [[ -d "${SNIPPETS_DIR}" ]]; then
-        cp "${CLOUD_INIT_CONFIG}" "${SNIPPETS_DIR}/ubuntu-cloud-init.yml"
-        qm set ${TEMPLATE_ID} --cicustom "user=${STORAGE}:snippets/ubuntu-cloud-init.yml"
-        echo "✅ Cloud-init configuration applied"
+    if scp "${CLOUD_INIT_CONFIG}" "$PROXMOX_USER@$PROXMOX_HOST:/var/lib/vz/snippets/ubuntu-cloud-init.yml"; then
+        execute_proxmox_cmd "qm set ${TEMPLATE_ID} --cicustom 'user=local:snippets/ubuntu-cloud-init.yml'" "Applying cloud-init configuration"
     else
-        echo "⚠️  Snippets directory not found, skipping custom cloud-init"
+        echo "⚠️  Failed to copy cloud-init configuration, skipping custom cloud-init"
     fi
 fi
 
-echo "📦 Converting VM to template..."
-qm template ${TEMPLATE_ID}
+execute_proxmox_cmd "qm template ${TEMPLATE_ID}" "Converting VM to template"
 
 echo "✅ Ubuntu template created successfully!"
 echo ""
