@@ -1,19 +1,33 @@
-# NixOS Kubernetes Infrastructure - Implementation Status
+# Homelab Infrastructure Roadmap
 
-## 🎯 Current Status: **COMPLETED AUTOMATED DEPLOYMENT**
+## 🎯 Current Status: **MULTI-PLATFORM INFRASTRUCTURE**
 
-This project successfully implements automated Kubernetes infrastructure provisioning using NixOS templates and Terraform.
+This project provides a flexible infrastructure-as-code foundation supporting both NixOS Kubernetes clusters and Ubuntu server deployments with a modular root-modules architecture.
 
 ---
 
 ## ✅ **Implemented Features**
 
+### **Root Modules Architecture**
+- ✅ Modular root modules pattern for infrastructure separation
+- ✅ Independent Terraform state files per infrastructure type
+- ✅ Shared modules for code reuse across projects
+- ✅ Standardized template for creating new projects
+- ✅ Environment-specific configurations (dev/staging/prod)
+
 ### **Infrastructure Automation**
-- ✅ Terraform project with Telmate Proxmox provider  
+- ✅ Terraform projects with Telmate Proxmox provider  
 - ✅ Reusable VM modules for provisioning
-- ✅ SSH key generation and management
+- ✅ SSH key generation and management per project
 - ✅ Ansible inventory generation
-- ✅ Flexible cluster sizing (dev/prod configurations)
+- ✅ Flexible resource sizing and environment configurations
+
+### **Ubuntu Server Infrastructure** 
+- ✅ Ubuntu 25.04 cloud-init template automation
+- ✅ Ansible-ready server deployments
+- ✅ End-to-end deployment scripts
+- ✅ DevOps tooling (Python 3, SSH, standard tools)
+- ✅ Separate state management from K8s infrastructure
 
 ### **NixOS Template System**
 - ✅ Automated NixOS ISO generation with `nixos-generators`
