@@ -8,7 +8,7 @@ output "ssh_private_key_file" {
 }
 
 output "ssh_public_key_file" {
-  description = "Path to SSH public key file"  
+  description = "Path to SSH public key file"
   value       = "${path.module}/ssh_keys/project_public_key.pub"
 }
 

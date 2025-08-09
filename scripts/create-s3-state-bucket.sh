@@ -2,7 +2,7 @@
 export PROJECT_NAME="homelab-proxmox-iac"
 export AWS_REGION="us-east-2"  # Change to your preferred region
 export S3_BUCKET_NAME="stetter-${PROJECT_NAME}-tf-state"
-export DYNAMODB_TABLE_NAME="${PROJECT_NAME}-tf-locks"
+export DYNAMODB_TABLE_NAME="terraform-state-lock-dynamo"
 
 # Create the S3 bucket with proper location constraint
 if [ "$AWS_REGION" = "us-east-1" ]; then

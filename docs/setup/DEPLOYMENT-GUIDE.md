@@ -42,7 +42,7 @@ We'll deploy in this order:
 **Verify S3 bucket creation:**
 ```bash
 aws s3 ls stetter-homelab-proxmox-iac-tf-state
-aws dynamodb describe-table --table-name homelab-proxmox-iac-tf-locks
+aws dynamodb describe-table --table-name terraform-state-lock-dynamo
 ```
 
 ---

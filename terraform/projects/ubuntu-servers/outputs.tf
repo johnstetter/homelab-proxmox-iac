@@ -21,7 +21,7 @@ output "ssh_private_key_file" {
 }
 
 output "ssh_public_key_file" {
-  description = "Path to SSH public key file"  
+  description = "Path to SSH public key file"
   value       = "${path.module}/ssh_keys/ubuntu_public_key.pub"
 }
 
@@ -40,7 +40,7 @@ output "server_ips" {
 output "ssh_connection_commands" {
   description = "SSH connection commands for each server"
   value = [
-    for server in module.ubuntu_servers : 
+    for server in module.ubuntu_servers :
     "ssh -i ${path.module}/ssh_keys/ubuntu_private_key.pem ${var.ssh_user}@${server.ip_address}"
   ]
 }

@@ -55,7 +55,7 @@ terraform {
     bucket       = "stetter-homelab-proxmox-iac-tf-state"
     key          = "my-project/dev/terraform.tfstate"  # ← Change this
     region       = "us-east-2"
-    dynamodb_table = "homelab-proxmox-iac-tf-locks"
+    use_lockfile = true
     encrypt      = true
   }
 }
