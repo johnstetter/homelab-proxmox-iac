@@ -18,7 +18,7 @@ LOG_DIR="$K8S_INFRA_LOG_DIR"
 
 # Default values
 OUTPUT_DIR="$ISO_DIR"
-NIXOS_VERSION="24.11"
+NIXOS_VERSION="25.05"
 CLEAN_BUILD=false
 ISO_NAME="nixos-base-template.iso"
 

@@ -262,8 +262,8 @@ nixos-generate-config --root /mnt
           options = [ "nfsvers=4" "rsize=1048576" "wsize=1048576" "hard" "intr" ];
         };
 
-        # Set state version (use 24.11 for current stable)
-        system.stateVersion = "24.11";
+        # Set state version (use 25.05 for current stable)
+        system.stateVersion = "25.05";
       }
     '';
   };
@@ -292,5 +292,5 @@ nixos-generate-config --root /mnt
   };
 
   # Set state version for the ISO  
-  system.stateVersion = "24.11";
+  system.stateVersion = "25.05";
 }
