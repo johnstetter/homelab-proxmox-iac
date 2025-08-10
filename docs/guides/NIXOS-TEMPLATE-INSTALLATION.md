@@ -158,8 +158,8 @@ vi /mnt/etc/nixos/configuration.nix
     wget
   ];
 
-  # Set state version (matches NixOS 24.11)
-  system.stateVersion = "24.11";
+  # Set state version (matches NixOS 25.05)
+  system.stateVersion = "25.05";
 }
 ```
 

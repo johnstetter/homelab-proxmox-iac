@@ -34,6 +34,6 @@
     wget
   ];
 
-  # Set state version (use 24.11 for stability)
-  system.stateVersion = "24.11";
+  # Set state version (use 25.05 for current stable)
+  system.stateVersion = "25.05";
 }

@@ -141,6 +141,29 @@ echo 'source ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
 
 **Important**: You must source the Nix profile in each new terminal session before running the ISO generation script.
 
+### Channel Configuration for NixOS 25.05
+
+**Critical Setup Requirement**: Before building NixOS 25.05 templates, ensure your local Nix channels point to the correct version:
+
+```bash
+# Check current channel (should show 25.05 after update)
+nix-channel --list
+
+# Update to NixOS 25.05 if not already set
+nix-channel --add https://nixos.org/channels/nixos-25.05 nixpkgs
+nix-channel --update
+
+# Verify the update worked
+nix-channel --list
+# Should output: nixpkgs https://nixos.org/channels/nixos-25.05
+```
+
+**Verification**: The ISO build process will show version strings in derivation paths:
+- ✅ Correct: `/nix/store/*nixos-25.05*` in build output
+- ❌ Wrong: `/nix/store/*nixos-24.11*` indicates old channel
+
+If you see 24.11 versions during build, stop and update your channels as shown above.
+
 ## Verification
 
 ### Check Generated Template
@@ -174,7 +197,7 @@ terraform plan
 The automated base template includes:
 
 **Base NixOS System:**
-- ✅ NixOS 24.11 (stable)
+- ✅ NixOS 25.05 (stable)
 - ✅ Cloud-init with LVM filesystem support  
 - ✅ Qemu guest agent
 - ✅ SSH key authentication (no password auth)
